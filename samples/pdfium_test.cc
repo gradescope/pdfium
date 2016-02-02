@@ -38,12 +38,14 @@
 #include "third_party/skia/include/core/SkPictureRecorder.h"
 #include "third_party/skia/include/core/SkStream.h"
 #endif
+#include "jpeglib.h"
 
 enum OutputFormat {
   OUTPUT_NONE,
   OUTPUT_TEXT,
   OUTPUT_PPM,
   OUTPUT_PNG,
+  OUTPUT_JPG,
 #ifdef _WIN32
   OUTPUT_BMP,
   OUTPUT_EMF,
@@ -140,6 +142,72 @@ void WriteText(FPDF_PAGE page, const char* pdf_name, int num) {
   FPDFText_ClosePage(textpage);
 
   (void)fclose(fp);
+}
+
+static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
+                     int stride, int width, int height) {
+  const char* buffer = reinterpret_cast<const char*>(buffer_void);
+
+  if (!CheckDimensions(stride, width, height))
+    return;
+
+  int out_len = width * height;
+  if (out_len > INT_MAX / 3)
+    return;
+  out_len *= 3;
+
+  char filename[256];
+  snprintf(filename, sizeof(filename), "%s.%d.jpg", pdf_name, num);
+  FILE* fp = fopen(filename, "wb");
+  if (!fp)
+    return;
+
+  JSAMPLE * image_buffer = (JSAMPLE *)buffer;  /* Points to large array of R,G,B-order data */
+  int image_height =  height;        /* Number of rows in image */
+  int image_width = width;         /* Number of columns in image */
+
+  struct jpeg_compress_struct cinfo;
+
+  struct jpeg_error_mgr jerr;
+  /* More stuff */
+  JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
+  int row_stride;               /* physical row width in image buffer */
+
+  cinfo.err = jpeg_std_error(&jerr);
+  /* Now we can initialize the JPEG compression object. */
+  jpeg_create_compress(&cinfo);
+  jpeg_stdio_dest(&cinfo, fp);
+  // Source data is B, G, R, unused.
+  // Dest data is R, G, B.
+  cinfo.image_width = image_width;      /* image width and height, in pixels */
+  cinfo.image_height = image_height;
+  cinfo.input_components = 4;           /* # of color components per pixel */
+  cinfo.in_color_space = JCS_EXT_BGRX;       /* colorspace of input image */
+  /* Now use the library's routine to set default compression parameters.
+   * (You must set at least cinfo.in_color_space before calling this,
+   * since the defaults depend on the source color space.)
+   */
+  jpeg_set_defaults(&cinfo);
+
+  jpeg_start_compress(&cinfo, TRUE);
+
+  row_stride = image_width * 4; /* JSAMPLEs per row in image_buffer */
+
+  while (cinfo.next_scanline < cinfo.image_height) {
+      /* jpeg_write_scanlines expects an array of pointers to scanlines.
+       * Here the array is only one element long, but you could pass
+       * more than one scanline at a time if that's more convenient.
+       */
+      row_pointer[0] = & image_buffer[cinfo.next_scanline * row_stride];
+      (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+  }
+
+  /* Step 6: Finish compression */
+
+  jpeg_finish_compress(&cinfo);
+
+  fclose(fp);
+  jpeg_destroy_compress(&cinfo);
 }
 
 static void WritePng(const char* pdf_name, int num, const void* buffer_void,
@@ -399,6 +467,12 @@ bool ParseCommandLine(const std::vector<std::string>& args,
       }
       options->output_format = OUTPUT_SKP;
 #endif
+    } else if (cur_arg == "--jpg") {
+      if (options->output_format != OUTPUT_NONE) {
+        fprintf(stderr, "Duplicate or conflicting --jpg argument\n");
+        return false;
+      }
+      options->output_format = OUTPUT_JPG;
     } else if (cur_arg.size() > 11 &&
                cur_arg.compare(0, 11, "--font-dir=") == 0) {
       if (!options->font_directory.empty()) {
@@ -585,10 +659,12 @@ bool RenderPage(const std::string& name,
         WriteSkp(name.c_str(), page_index, recorder.get());
       } break;
 #endif
-      default:
+    case OUTPUT_JPG: {
+      WriteJpg(name.c_str(), page_index, buffer, stride, width, height);
+    } break;
+    default:
         break;
     }
-
     FPDFBitmap_Destroy(bitmap);
   } else {
     fprintf(stderr, "Page was too large to be rendered.\n");
