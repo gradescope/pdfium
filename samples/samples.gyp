@@ -50,6 +50,9 @@
         'libraries!': [
           '-lfreetype',
         ],
+        'libraries': [
+           '/usr/lib/x86_64-linux-gnu/libjpeg.a',
+        ]
       },
       'conditions': [
         ['pdf_enable_v8==1', {
