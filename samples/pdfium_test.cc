@@ -34,6 +34,9 @@
 
 #include "jpeglib.h"
 
+#define START_PAGE_NUMBER 1
+// #define START_PAGE_NUMBER 0
+
 enum OutputFormat {
   OUTPUT_NONE,
   OUTPUT_PPM,
@@ -79,7 +82,7 @@ static void WritePpm(const char* pdf_name, int num, const void* buffer_void,
   out_len *= 3;
 
   char filename[256];
-  snprintf(filename, sizeof(filename), "%s.%d.ppm", pdf_name, num);
+  snprintf(filename, sizeof(filename), "%s.%d.ppm", pdf_name, num + START_PAGE_NUMBER);
   FILE* fp = fopen(filename, "wb");
   if (!fp)
     return;
@@ -117,7 +120,7 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
   out_len *= 3;
 
   char filename[256];
-  snprintf(filename, sizeof(filename), "%s.%d.jpg", pdf_name, num);
+  snprintf(filename, sizeof(filename), "%s.%d.jpg", pdf_name, num + START_PAGE_NUMBER);
   FILE* fp = fopen(filename, "wb");
   if (!fp)
     return;
@@ -185,7 +188,7 @@ static void WritePng(const char* pdf_name, int num, const void* buffer_void,
 
   char filename[256];
   int chars_formatted = snprintf(
-      filename, sizeof(filename), "%s.%d.png", pdf_name, num);
+      filename, sizeof(filename), "%s.%d.png", pdf_name, num + START_PAGE_NUMBER);
   if (chars_formatted < 0 ||
       static_cast<size_t>(chars_formatted) >= sizeof(filename)) {
     fprintf(stderr, "Filname %s is too long\n", filename);
