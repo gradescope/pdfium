@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include <list>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -389,6 +390,14 @@ bool ParseCommandLine(const std::vector<std::string>& args,
         return false;
       }
       options->scale_factor_as_string = cur_arg.substr(8);
+    } else if (cur_arg.size() > 6 && cur_arg.compare(0, 6, "--res=") == 0) {
+      if (!options->scale_factor_as_string.empty()) {
+        fprintf(stderr, "Duplicate --res or --scale argument\n");
+        return false;
+      }
+      double res = std::stod(cur_arg.substr(6));
+      double scale = res/72.0;
+      options->scale_factor_as_string = std::to_string(scale);
     } else if (cur_arg.size() >= 2 && cur_arg[0] == '-' && cur_arg[1] == '-') {
       fprintf(stderr, "Unrecognized argument %s\n", cur_arg.c_str());
       return false;
@@ -634,6 +643,7 @@ static const char usage_string[] =
     "  --bin-dir=<path>  - override path to v8 external data\n"
     "  --font-dir=<path> - override path to external fonts\n"
     "  --scale=<number>  - scale output size by number (e.g. 0.5)\n"
+    "  --res=<number>    - output dpi (scale=res/72.0)\n"
 #ifdef _WIN32
     "  --bmp - write page images <pdf-name>.<page-number>.bmp\n"
     "  --emf - write page meta files <pdf-name>.<page-number>.emf\n"
