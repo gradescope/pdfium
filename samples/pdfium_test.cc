@@ -46,7 +46,7 @@ enum OutputFormat {
 };
 
 struct Options {
-  Options() : show_config(false), output_format(OUTPUT_NONE) {}
+  Options() : show_config(false), output_format(OUTPUT_NONE), first_page(-1), last_page(-1) {}
 
   bool show_config;
   OutputFormat output_format;
@@ -54,6 +54,8 @@ struct Options {
   std::string exe_path;
   std::string bin_directory;
   std::string font_directory;
+  int first_page;
+  int last_page;
 };
 
 static bool CheckDimensions(int stride, int width, int height) {
@@ -398,7 +400,15 @@ bool ParseCommandLine(const std::vector<std::string>& args,
       double res = std::stod(cur_arg.substr(6));
       double scale = res/72.0;
       options->scale_factor_as_string = std::to_string(scale);
-    } else if (cur_arg.size() >= 2 && cur_arg[0] == '-' && cur_arg[1] == '-') {
+    } else if (cur_arg.size() > 8 && cur_arg.compare(0, 8, "--first=") == 0) {
+
+      int first = std::stoi(cur_arg.substr(8));
+      options->first_page = first;
+    } else if (cur_arg.size() > 7 && cur_arg.compare(0, 7, "--last=") == 0) {
+
+      int last = std::stoi(cur_arg.substr(7));
+      options->last_page = last;
+    }  else if (cur_arg.size() >= 2 && cur_arg[0] == '-' && cur_arg[1] == '-') {
       fprintf(stderr, "Unrecognized argument %s\n", cur_arg.c_str());
       return false;
     } else
@@ -593,7 +603,16 @@ void RenderPdf(const std::string& name, const char* pBuf, size_t len,
   int page_count = FPDF_GetPageCount(doc);
   int rendered_pages = 0;
   int bad_pages = 0;
-  for (int i = 0; i < page_count; ++i) {
+  int first_page = 1;
+  int last_page = page_count;
+  if (options.first_page > 0 and options.first_page < page_count){
+    first_page = options.first_page;
+  }
+  if (options.last_page > 0 and options.last_page < page_count) {
+    last_page = options.last_page;
+  }
+  // FPDF page numbers are 0-indexed
+  for (int i = first_page - 1; i < last_page; ++i) {
     if (bIsLinearized) {
       nRet = PDF_DATA_NOTAVAIL;
       while (nRet == PDF_DATA_NOTAVAIL) {
@@ -644,6 +663,8 @@ static const char usage_string[] =
     "  --font-dir=<path> - override path to external fonts\n"
     "  --scale=<number>  - scale output size by number (e.g. 0.5)\n"
     "  --res=<number>    - output dpi (scale=res/72.0)\n"
+    "  --first=<number>  - first page to convert (1-based)\n"
+    "  --last=<number>   - last page to convert\n"
 #ifdef _WIN32
     "  --bmp - write page images <pdf-name>.<page-number>.bmp\n"
     "  --emf - write page meta files <pdf-name>.<page-number>.emf\n"
