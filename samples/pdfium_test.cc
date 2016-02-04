@@ -838,10 +838,10 @@ void RenderPdf(const std::string& name,
   int bad_pages = 0;
   int first_page = 1;
   int last_page = page_count;
-  if (options.first_page > 0 and options.first_page < page_count){
+  if (options.first_page > 0 and options.first_page <= page_count){
     first_page = options.first_page;
   }
-  if (options.last_page > 0 and options.last_page < page_count) {
+  if (options.last_page > 0 and options.last_page <= page_count) {
     last_page = options.last_page;
   }
   // FPDF page numbers are 0-indexed
