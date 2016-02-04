@@ -49,7 +49,8 @@ enum OutputFormat {
 };
 
 struct Options {
-  Options() : show_config(false), output_format(OUTPUT_NONE), first_page(-1), last_page(-1) {}
+  Options() : show_config(false), output_format(OUTPUT_NONE),
+              output_pattern("%s.%d"), first_page(-1), last_page(-1) {}
 
   bool show_config;
   OutputFormat output_format;
@@ -57,6 +58,7 @@ struct Options {
   std::string exe_path;
   std::string bin_directory;
   std::string font_directory;
+  std::string output_pattern;
   int first_page;
   int last_page;
 };
@@ -69,8 +71,33 @@ static bool CheckDimensions(int stride, int width, int height) {
   return true;
 }
 
+static std::string outputFileName(std::string pattern, const char* pdf_name, int pagenumber, const char* ext){
+  char buffer[256];
+  int spos = pattern.find("%s");
+  int dpos = pattern.find("%d");
+  std::string with_ext = pattern + ".%s";
+  int formatted_chars;
+  if (spos == std::string::npos){ // Didn't use input filename in format string
+    formatted_chars = snprintf(buffer, sizeof(buffer), with_ext.c_str(),
+                               pagenumber + START_PAGE_NUMBER, ext);
+  }else{
+    if (spos < dpos){
+      formatted_chars = snprintf(buffer, sizeof(buffer), with_ext.c_str(), pdf_name,
+                                 pagenumber + START_PAGE_NUMBER, ext);
+    }else{
+      formatted_chars = snprintf(buffer, sizeof(buffer), with_ext.c_str(),
+                                 pagenumber + START_PAGE_NUMBER, pdf_name, ext);
+    }
+  }
+  if(formatted_chars > sizeof(buffer)){
+    fprintf(stderr, "Filname %s is too long\n", buffer);
+  }
+  return std::string(buffer);
+}
+
+
 static void WritePpm(const char* pdf_name, int num, const void* buffer_void,
-                     int stride, int width, int height) {
+                     int stride, int width, int height, std::string output_pattern) {
   const char* buffer = reinterpret_cast<const char*>(buffer_void);
 
   if (!CheckDimensions(stride, width, height))
@@ -81,9 +108,8 @@ static void WritePpm(const char* pdf_name, int num, const void* buffer_void,
     return;
   out_len *= 3;
 
-  char filename[256];
-  snprintf(filename, sizeof(filename), "%s.%d.ppm", pdf_name, num + START_PAGE_NUMBER);
-  FILE* fp = fopen(filename, "wb");
+  std::string filename = outputFileName(output_pattern, pdf_name, num, "ppm");
+  FILE* fp = fopen(filename.c_str(), "wb");
   if (!fp)
     return;
   fprintf(fp, "P6\n# PDF test render\n%d %d\n255\n", width, height);
@@ -108,7 +134,7 @@ static void WritePpm(const char* pdf_name, int num, const void* buffer_void,
 }
 
 static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
-                     int stride, int width, int height) {
+                     int stride, int width, int height, std::string output_pattern) {
   const char* buffer = reinterpret_cast<const char*>(buffer_void);
 
   if (!CheckDimensions(stride, width, height))
@@ -119,9 +145,8 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
     return;
   out_len *= 3;
 
-  char filename[256];
-  snprintf(filename, sizeof(filename), "%s.%d.jpg", pdf_name, num + START_PAGE_NUMBER);
-  FILE* fp = fopen(filename, "wb");
+  std::string filename = outputFileName(output_pattern, pdf_name, num, "jpg");
+  FILE* fp = fopen(filename.c_str(), "wb");
   if (!fp)
     return;
 
@@ -174,7 +199,7 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
 }
 
 static void WritePng(const char* pdf_name, int num, const void* buffer_void,
-                     int stride, int width, int height) {
+                     int stride, int width, int height, std::string output_pattern) {
   if (!CheckDimensions(stride, width, height))
     return;
 
@@ -186,32 +211,25 @@ static void WritePng(const char* pdf_name, int num, const void* buffer_void,
     return;
   }
 
-  char filename[256];
-  int chars_formatted = snprintf(
-      filename, sizeof(filename), "%s.%d.png", pdf_name, num + START_PAGE_NUMBER);
-  if (chars_formatted < 0 ||
-      static_cast<size_t>(chars_formatted) >= sizeof(filename)) {
-    fprintf(stderr, "Filname %s is too long\n", filename);
-    return;
-  }
+  std::string filename = outputFileName(output_pattern, pdf_name, num, "png");
 
-  FILE* fp = fopen(filename, "wb");
+  FILE* fp = fopen(filename.c_str(), "wb");
   if (!fp) {
-    fprintf(stderr, "Failed to open %s for output\n", filename);
+    fprintf(stderr, "Failed to open %s for output\n", filename.c_str());
     return;
   }
 
   size_t bytes_written = fwrite(
       &png_encoding.front(), 1, png_encoding.size(), fp);
   if (bytes_written != png_encoding.size())
-    fprintf(stderr, "Failed to write to  %s\n", filename);
+    fprintf(stderr, "Failed to write to  %s\n", filename.c_str());
 
   (void)fclose(fp);
 }
 
 #ifdef _WIN32
 static void WriteBmp(const char* pdf_name, int num, const void* buffer,
-                     int stride, int width, int height) {
+                     int stride, int width, int height, std::string output_pattern) {
   if (!CheckDimensions(stride, width, height))
     return;
 
@@ -219,9 +237,8 @@ static void WriteBmp(const char* pdf_name, int num, const void* buffer,
   if (out_len > INT_MAX / 3)
     return;
 
-  char filename[256];
-  snprintf(filename, sizeof(filename), "%s.%d.bmp", pdf_name, num);
-  FILE* fp = fopen(filename, "wb");
+  std::string filename = outputFileName(output_pattern, pdf_name, num, "bmp");
+  FILE* fp = fopen(filename.c_str(), "wb");
   if (!fp)
     return;
 
@@ -245,14 +262,13 @@ static void WriteBmp(const char* pdf_name, int num, const void* buffer,
   fclose(fp);
 }
 
-void WriteEmf(FPDF_PAGE page, const char* pdf_name, int num) {
+void WriteEmf(FPDF_PAGE page, const char* pdf_name, int num, std::string output_pattern) {
   int width = static_cast<int>(FPDF_GetPageWidth(page));
   int height = static_cast<int>(FPDF_GetPageHeight(page));
 
-  char filename[256];
-  snprintf(filename, sizeof(filename), "%s.%d.emf", pdf_name, num);
+  std::string filename = outputFileName(output_pattern, pdf_name, num, "emf");
 
-  HDC dc = CreateEnhMetaFileA(nullptr, filename, nullptr, nullptr);
+  HDC dc = CreateEnhMetaFileA(nullptr, filename.c_str(), nullptr, nullptr);
 
   HRGN rgn = CreateRectRgn(0, 0, width, height);
   SelectClipRgn(dc, rgn);
@@ -389,7 +405,9 @@ bool ParseCommandLine(const std::vector<std::string>& args,
     }
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 #endif  // PDF_ENABLE_V8
-    else if (cur_arg.size() > 8 && cur_arg.compare(0, 8, "--scale=") == 0) {
+    else if (cur_arg.size() > 9 && cur_arg.compare(0, 9, "--output=") == 0) {
+      options->output_pattern = cur_arg.substr(9);
+    } else if (cur_arg.size() > 8 && cur_arg.compare(0, 8, "--scale=") == 0) {
       if (!options->scale_factor_as_string.empty()) {
         fprintf(stderr, "Duplicate --scale argument\n");
         return false;
@@ -467,23 +485,27 @@ bool RenderPage(const std::string& name,
   switch (options.output_format) {
 #ifdef _WIN32
     case OUTPUT_BMP:
-      WriteBmp(name.c_str(), page_index, buffer, stride, width, height);
+      WriteBmp(name.c_str(), page_index, buffer, stride, width, height,
+               options.output_pattern);
       break;
 
     case OUTPUT_EMF:
-      WriteEmf(page, name.c_str(), page_index);
+      WriteEmf(page, name.c_str(), page_index, options.output_pattern);
       break;
 #endif
     case OUTPUT_PNG:
-      WritePng(name.c_str(), page_index, buffer, stride, width, height);
+      WritePng(name.c_str(), page_index, buffer, stride, width, height,
+               options.output_pattern);
       break;
 
     case OUTPUT_PPM:
-      WritePpm(name.c_str(), page_index, buffer, stride, width, height);
+      WritePpm(name.c_str(), page_index, buffer, stride, width, height,
+               options.output_pattern);
       break;
 
     case OUTPUT_JPG:
-      WriteJpg(name.c_str(), page_index, buffer, stride, width, height);
+      WriteJpg(name.c_str(), page_index, buffer, stride, width, height,
+               options.output_pattern);
       break;
 
     default:
@@ -663,6 +685,8 @@ static const char usage_string[] =
     "Usage: pdfium_test [OPTION] [FILE]...\n"
     "  --show-config     - print build options and exit\n"
     "  --bin-dir=<path>  - override path to v8 external data\n"
+    "  --output=<path>   - output file pattern (no extension)\n"
+    "                      use %s for filename or %d for page number\n"
     "  --font-dir=<path> - override path to external fonts\n"
     "  --scale=<number>  - scale output size by number (e.g. 0.5)\n"
     "  --res=<number>    - output dpi (scale=res/72.0)\n"
@@ -672,6 +696,7 @@ static const char usage_string[] =
     "  --bmp - write page images <pdf-name>.<page-number>.bmp\n"
     "  --emf - write page meta files <pdf-name>.<page-number>.emf\n"
 #endif
+    "  --jpg - write page images <pdf-name>.<page-number>.jpg\n"
     "  --png - write page images <pdf-name>.<page-number>.png\n"
     "  --ppm - write page images <pdf-name>.<page-number>.ppm\n";
 
