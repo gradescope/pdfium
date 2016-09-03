@@ -59,7 +59,7 @@ each directory can only house a single gclient configuration.
 ```
 mkdir repo
 cd repo
-gclient config --unmanaged https://pdfium.googlesource.com/pdfium.git
+gclient config --unmanaged https://github.com/gradescope/pdfium.git
 gclient sync
 cd pdfium
 ```
