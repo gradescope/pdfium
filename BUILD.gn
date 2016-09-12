@@ -11,14 +11,12 @@ config("pdfium_common_config") {
   include_dirs = [
     ".",
     "third_party/freetype/include",
-    "third_party/libjpegturbo",
     "third_party/freetype/include/freetype",
   ]
   defines = [
     "OPJ_STATIC",
     "PNG_PREFIX",
     "PNG_USE_READ_MACROS",
-    "USE_SYSTEM_LIBJPEG",
   ]
 
   if (pdf_use_skia) {
@@ -563,6 +561,7 @@ static_library("fxcodec") {
     "third_party:fx_lcms2",
     "third_party:fx_libopenjpeg",
     "third_party:fx_zlib",
+    "//third_party:jpeg",
   ]
   sources = [
     "core/fxcodec/codec/ccodec_basicmodule.h",
