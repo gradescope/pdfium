@@ -4,31 +4,21 @@
 
 #include <memory>
 
-#include "xfa/fde/xml/cfx_saxreader.h"
-#include "xfa/fgas/crt/fgas_stream.h"
-#include "xfa/fxfa/parser/cxfa_widetextread.h"
+#include "core/fxcrt/cfx_memorystream.h"
+#include "core/fxcrt/cfx_seekablestreamproxy.h"
+#include "core/fxcrt/retain_ptr.h"
+#include "core/fxcrt/xml/cfx_saxreader.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-  CFX_WideString input = CFX_WideString::FromUTF8(
-      CFX_ByteStringC(data, static_cast<FX_STRSIZE>(size)));
-  std::unique_ptr<IFX_Stream, ReleaseDeleter<IFX_Stream>> stream(
-      new CXFA_WideTextRead(input));
-  if (!stream)
-    return 0;
-
-  std::unique_ptr<IFX_FileRead, ReleaseDeleter<IFX_FileRead>> fileRead(
-      FX_CreateFileRead(stream.get(), false));
-  if (!fileRead)
-    return 0;
-
   CFX_SAXReader reader;
-  if (reader.StartParse(fileRead.get(), 0, -1, CFX_SaxParseMode_NotSkipSpace) <
-      0) {
+  if (reader.StartParse(pdfium::MakeRetain<CFX_MemoryStream>(
+                            const_cast<uint8_t*>(data), size, false),
+                        0, -1, CFX_SaxParseMode_NotSkipSpace) < 0) {
     return 0;
   }
 
   while (1) {
-    int32_t ret = reader.ContinueParse(nullptr);
+    int32_t ret = reader.ContinueParse();
     if (ret < 0 || ret > 99)
       break;
   }

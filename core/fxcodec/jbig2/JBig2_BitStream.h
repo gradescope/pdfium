@@ -7,20 +7,20 @@
 #ifndef CORE_FXCODEC_JBIG2_JBIG2_BITSTREAM_H_
 #define CORE_FXCODEC_JBIG2_JBIG2_BITSTREAM_H_
 
-#include "core/fxcrt/include/fx_basic.h"
+#include "core/fxcrt/retain_ptr.h"
 
 class CPDF_StreamAcc;
 
 class CJBig2_BitStream {
  public:
-  explicit CJBig2_BitStream(CPDF_StreamAcc* pSrcStream);
+  explicit CJBig2_BitStream(const RetainPtr<CPDF_StreamAcc>& pSrcStream);
   ~CJBig2_BitStream();
 
   // TODO(thestig): readFoo() should return bool.
   int32_t readNBits(uint32_t nBits, uint32_t* dwResult);
   int32_t readNBits(uint32_t nBits, int32_t* nResult);
   int32_t read1Bit(uint32_t* dwResult);
-  int32_t read1Bit(FX_BOOL* bResult);
+  int32_t read1Bit(bool* bResult);
   int32_t read1Byte(uint8_t* cResult);
   int32_t readInteger(uint32_t* dwResult);
   int32_t readShortInteger(uint16_t* wResult);
@@ -40,9 +40,10 @@ class CJBig2_BitStream {
   uint32_t getByteLeft() const;
   uint32_t getObjNum() const;
 
+  bool IsInBounds() const;
+
  private:
   void AdvanceBit();
-  bool IsInBound() const;
   uint32_t LengthInBits() const;
 
   const uint8_t* m_pBuf;

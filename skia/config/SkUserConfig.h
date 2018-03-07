@@ -127,9 +127,6 @@
 
 // ===== Begin Chrome-specific definitions =====
 
-#define SK_SCALAR_IS_FLOAT
-#undef SK_SCALAR_IS_FIXED
-
 #define SK_MSCALAR_IS_FLOAT
 #undef SK_MSCALAR_IS_DOUBLE
 
@@ -207,6 +204,10 @@ SK_API void SkDebugf_FileLine(const char* file,
 #define SK_SUPPORT_LEGACY_GETTOPDEVICE
 #endif
 
+#ifndef SK_SUPPORT_EXOTIC_CLIPOPS
+#define SK_SUPPORT_EXOTIC_CLIPOPS
+#endif
+
 #ifndef SK_SUPPORT_LEGACY_GETDEVICE
 #define SK_SUPPORT_LEGACY_GETDEVICE
 #endif
@@ -234,7 +235,7 @@ SK_API void SkDebugf_FileLine(const char* file,
 #define SK_SUPPORT_LEGACY_EVAL_CUBIC
 #endif
 
-///////////////////////// Imported from BUILD.gn and skia_common.gypi
+///////////////////////// Imported from BUILD.gn
 
 /* In some places Skia can use static initializers for global initialization,
  *  or fall back to lazy runtime initialization. Chrome always wants the latter.

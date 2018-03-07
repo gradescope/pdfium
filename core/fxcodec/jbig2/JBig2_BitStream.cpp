@@ -8,10 +8,10 @@
 
 #include <algorithm>
 
-#include "core/fpdfapi/fpdf_parser/include/cpdf_stream.h"
-#include "core/fpdfapi/fpdf_parser/include/cpdf_stream_acc.h"
+#include "core/fpdfapi/parser/cpdf_stream.h"
+#include "core/fpdfapi/parser/cpdf_stream_acc.h"
 
-CJBig2_BitStream::CJBig2_BitStream(CPDF_StreamAcc* pSrcStream)
+CJBig2_BitStream::CJBig2_BitStream(const RetainPtr<CPDF_StreamAcc>& pSrcStream)
     : m_pBuf(pSrcStream->GetData()),
       m_dwLength(pSrcStream->GetSize()),
       m_dwByteIdx(0),
@@ -27,6 +27,9 @@ CJBig2_BitStream::CJBig2_BitStream(CPDF_StreamAcc* pSrcStream)
 CJBig2_BitStream::~CJBig2_BitStream() {}
 
 int32_t CJBig2_BitStream::readNBits(uint32_t dwBits, uint32_t* dwResult) {
+  if (!IsInBounds())
+    return -1;
+
   uint32_t dwBitPos = getBitPos();
   if (dwBitPos > LengthInBits())
     return -1;
@@ -46,6 +49,9 @@ int32_t CJBig2_BitStream::readNBits(uint32_t dwBits, uint32_t* dwResult) {
 }
 
 int32_t CJBig2_BitStream::readNBits(uint32_t dwBits, int32_t* nResult) {
+  if (!IsInBounds())
+    return -1;
+
   uint32_t dwBitPos = getBitPos();
   if (dwBitPos > LengthInBits())
     return -1;
@@ -65,7 +71,7 @@ int32_t CJBig2_BitStream::readNBits(uint32_t dwBits, int32_t* nResult) {
 }
 
 int32_t CJBig2_BitStream::read1Bit(uint32_t* dwResult) {
-  if (!IsInBound())
+  if (!IsInBounds())
     return -1;
 
   *dwResult = (m_pBuf[m_dwByteIdx] >> (7 - m_dwBitIdx)) & 0x01;
@@ -73,8 +79,8 @@ int32_t CJBig2_BitStream::read1Bit(uint32_t* dwResult) {
   return 0;
 }
 
-int32_t CJBig2_BitStream::read1Bit(FX_BOOL* bResult) {
-  if (!IsInBound())
+int32_t CJBig2_BitStream::read1Bit(bool* bResult) {
+  if (!IsInBounds())
     return -1;
 
   *bResult = (m_pBuf[m_dwByteIdx] >> (7 - m_dwBitIdx)) & 0x01;
@@ -83,7 +89,7 @@ int32_t CJBig2_BitStream::read1Bit(FX_BOOL* bResult) {
 }
 
 int32_t CJBig2_BitStream::read1Byte(uint8_t* cResult) {
-  if (!IsInBound())
+  if (!IsInBounds())
     return -1;
 
   *cResult = m_pBuf[m_dwByteIdx];
@@ -118,16 +124,16 @@ void CJBig2_BitStream::alignByte() {
 }
 
 uint8_t CJBig2_BitStream::getCurByte() const {
-  return IsInBound() ? m_pBuf[m_dwByteIdx] : 0;
+  return IsInBounds() ? m_pBuf[m_dwByteIdx] : 0;
 }
 
 void CJBig2_BitStream::incByteIdx() {
-  if (IsInBound())
+  if (IsInBounds())
     ++m_dwByteIdx;
 }
 
 uint8_t CJBig2_BitStream::getCurByte_arith() const {
-  return IsInBound() ? m_pBuf[m_dwByteIdx] : 0xFF;
+  return IsInBounds() ? m_pBuf[m_dwByteIdx] : 0xFF;
 }
 
 uint8_t CJBig2_BitStream::getNextByte_arith() const {
@@ -176,7 +182,7 @@ void CJBig2_BitStream::AdvanceBit() {
   }
 }
 
-bool CJBig2_BitStream::IsInBound() const {
+bool CJBig2_BitStream::IsInBounds() const {
   return m_dwByteIdx < m_dwLength;
 }
 

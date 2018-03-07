@@ -7,7 +7,10 @@
 #ifndef CORE_FXCODEC_JBIG2_JBIG2_IMAGE_H_
 #define CORE_FXCODEC_JBIG2_JBIG2_IMAGE_H_
 
+#include <memory>
+
 #include "core/fxcodec/jbig2/JBig2_Define.h"
+#include "core/fxcrt/maybe_owned.h"
 
 struct FX_RECT;
 
@@ -29,53 +32,50 @@ class CJBig2_Image {
   int32_t width() const { return m_nWidth; }
   int32_t height() const { return m_nHeight; }
   int32_t stride() const { return m_nStride; }
+  uint8_t* data() const { return m_pData.Get(); }
 
-  FX_BOOL getPixel(int32_t x, int32_t y);
-  int32_t setPixel(int32_t x, int32_t y, FX_BOOL v);
+  int getPixel(int32_t x, int32_t y) const;
+  int32_t setPixel(int32_t x, int32_t y, int bVal);
 
   void copyLine(int32_t hTo, int32_t hFrom);
-  void fill(FX_BOOL v);
+  void fill(bool v);
 
-  FX_BOOL composeTo(CJBig2_Image* pDst,
-                    int32_t x,
-                    int32_t y,
-                    JBig2ComposeOp op);
-  FX_BOOL composeTo(CJBig2_Image* pDst,
-                    int32_t x,
-                    int32_t y,
-                    JBig2ComposeOp op,
-                    const FX_RECT* pSrcRect);
+  bool composeTo(CJBig2_Image* pDst, int32_t x, int32_t y, JBig2ComposeOp op);
+  bool composeTo(CJBig2_Image* pDst,
+                 int32_t x,
+                 int32_t y,
+                 JBig2ComposeOp op,
+                 const FX_RECT* pSrcRect);
 
-  FX_BOOL composeTo_opt2(CJBig2_Image* pDst,
-                         int32_t x,
-                         int32_t y,
-                         JBig2ComposeOp op);
-  FX_BOOL composeTo_opt2(CJBig2_Image* pDst,
-                         int32_t x,
-                         int32_t y,
-                         JBig2ComposeOp op,
-                         const FX_RECT* pSrcRect);
-
-  FX_BOOL composeFrom(int32_t x,
+  bool composeTo_opt2(CJBig2_Image* pDst,
+                      int32_t x,
                       int32_t y,
-                      CJBig2_Image* pSrc,
                       JBig2ComposeOp op);
-  FX_BOOL composeFrom(int32_t x,
+  bool composeTo_opt2(CJBig2_Image* pDst,
+                      int32_t x,
                       int32_t y,
-                      CJBig2_Image* pSrc,
                       JBig2ComposeOp op,
                       const FX_RECT* pSrcRect);
 
-  CJBig2_Image* subImage(int32_t x, int32_t y, int32_t w, int32_t h);
-  void expand(int32_t h, FX_BOOL v);
+  bool composeFrom(int32_t x, int32_t y, CJBig2_Image* pSrc, JBig2ComposeOp op);
+  bool composeFrom(int32_t x,
+                   int32_t y,
+                   CJBig2_Image* pSrc,
+                   JBig2ComposeOp op,
+                   const FX_RECT* pSrcRect);
 
-  uint8_t* m_pData;
+  std::unique_ptr<CJBig2_Image> subImage(int32_t x,
+                                         int32_t y,
+                                         int32_t w,
+                                         int32_t h);
+  void expand(int32_t h, bool v);
+
 
  private:
+  MaybeOwned<uint8_t, FxFreeDeleter> m_pData;
   int32_t m_nWidth;   // 1-bit pixels
   int32_t m_nHeight;  // lines
   int32_t m_nStride;  // bytes
-  bool m_bOwnsBuffer;
 };
 
 #endif  // CORE_FXCODEC_JBIG2_JBIG2_IMAGE_H_

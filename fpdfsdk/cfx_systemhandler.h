@@ -7,11 +7,11 @@
 #ifndef FPDFSDK_CFX_SYSTEMHANDLER_H_
 #define FPDFSDK_CFX_SYSTEMHANDLER_H_
 
-#include "core/fxcrt/include/fx_coordinates.h"
-#include "core/fxcrt/include/fx_system.h"
+#include "core/fxcrt/fx_coordinates.h"
+#include "core/fxcrt/fx_string.h"
+#include "core/fxcrt/fx_system.h"
+#include "core/fxcrt/unowned_ptr.h"
 
-using FX_HWND = void*;
-using FX_HMENU = void*;
 using TimerCallback = void (*)(int32_t idEvent);
 
 struct FX_SYSTEMTIME {
@@ -43,35 +43,31 @@ struct FX_SYSTEMTIME {
 #define FXCT_HBEAM 4
 #define FXCT_HAND 5
 
+class CFFL_FormFiller;
 class CPDF_Document;
 class CPDF_Font;
-class CPDFDoc_Environment;
+class CPDFSDK_FormFillEnvironment;
+class CPDFSDK_Widget;
 
 class CFX_SystemHandler {
  public:
-  explicit CFX_SystemHandler(CPDFDoc_Environment* pEnv) : m_pEnv(pEnv) {}
-  ~CFX_SystemHandler() {}
+  explicit CFX_SystemHandler(CPDFSDK_FormFillEnvironment* pFormFillEnv);
+  ~CFX_SystemHandler();
 
-  void InvalidateRect(FX_HWND hWnd, FX_RECT rect);
-  void OutputSelectedRect(void* pFormFiller, CFX_FloatRect& rect);
+  void InvalidateRect(CPDFSDK_Widget* widget, const CFX_FloatRect& rect);
+  void OutputSelectedRect(CFFL_FormFiller* pFormFiller, CFX_FloatRect& rect);
   bool IsSelectionImplemented() const;
-
   void SetCursor(int32_t nCursorType);
-
-  bool FindNativeTrueTypeFont(CFX_ByteString sFontFaceName);
+  bool FindNativeTrueTypeFont(ByteString sFontFaceName);
   CPDF_Font* AddNativeTrueTypeFontToPDF(CPDF_Document* pDoc,
-                                        CFX_ByteString sFontFaceName,
+                                        ByteString sFontFaceName,
                                         uint8_t nCharset);
+
   int32_t SetTimer(int32_t uElapse, TimerCallback lpTimerFunc);
   void KillTimer(int32_t nID);
-  bool IsSHIFTKeyDown(uint32_t nFlag) const;
-  bool IsCTRLKeyDown(uint32_t nFlag) const;
-  bool IsALTKeyDown(uint32_t nFlag) const;
-
-  FX_SYSTEMTIME GetLocalTime();
 
  private:
-  CPDFDoc_Environment* const m_pEnv;
+  UnownedPtr<CPDFSDK_FormFillEnvironment> const m_pFormFillEnv;
 };
 
 #endif  // FPDFSDK_CFX_SYSTEMHANDLER_H_

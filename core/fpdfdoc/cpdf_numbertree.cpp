@@ -6,18 +6,18 @@
 
 #include "core/fpdfdoc/cpdf_numbertree.h"
 
-#include "core/fpdfapi/fpdf_parser/include/cpdf_array.h"
-#include "core/fpdfapi/fpdf_parser/include/cpdf_dictionary.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
+#include "core/fpdfapi/parser/cpdf_dictionary.h"
 
 namespace {
 
 CPDF_Object* SearchNumberNode(const CPDF_Dictionary* pNode, int num) {
-  CPDF_Array* pLimits = pNode->GetArrayBy("Limits");
+  CPDF_Array* pLimits = pNode->GetArrayFor("Limits");
   if (pLimits &&
       (num < pLimits->GetIntegerAt(0) || num > pLimits->GetIntegerAt(1))) {
     return nullptr;
   }
-  CPDF_Array* pNumbers = pNode->GetArrayBy("Nums");
+  CPDF_Array* pNumbers = pNode->GetArrayFor("Nums");
   if (pNumbers) {
     for (size_t i = 0; i < pNumbers->GetCount() / 2; i++) {
       int index = pNumbers->GetIntegerAt(i * 2);
@@ -29,7 +29,7 @@ CPDF_Object* SearchNumberNode(const CPDF_Dictionary* pNode, int num) {
     return nullptr;
   }
 
-  CPDF_Array* pKids = pNode->GetArrayBy("Kids");
+  CPDF_Array* pKids = pNode->GetArrayFor("Kids");
   if (!pKids)
     return nullptr;
 
@@ -47,6 +47,10 @@ CPDF_Object* SearchNumberNode(const CPDF_Dictionary* pNode, int num) {
 
 }  // namespace
 
+CPDF_NumberTree::CPDF_NumberTree(CPDF_Dictionary* pRoot) : m_pRoot(pRoot) {}
+
+CPDF_NumberTree::~CPDF_NumberTree() {}
+
 CPDF_Object* CPDF_NumberTree::LookupValue(int num) const {
-  return SearchNumberNode(m_pRoot, num);
+  return SearchNumberNode(m_pRoot.Get(), num);
 }

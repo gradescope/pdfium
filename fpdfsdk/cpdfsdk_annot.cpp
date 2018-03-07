@@ -4,14 +4,15 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "fpdfsdk/include/cpdfsdk_annot.h"
+#include "fpdfsdk/cpdfsdk_annot.h"
 
 #include <algorithm>
 
-#include "fpdfsdk/include/fsdk_mgr.h"
+#include "fpdfsdk/cpdfsdk_pageview.h"
+#include "third_party/base/stl_util.h"
 
 #ifdef PDF_ENABLE_XFA
-#include "fpdfsdk/fpdfxfa/include/fpdfxfa_doc.h"
+#include "fpdfsdk/fpdfxfa/cpdfxfa_context.h"
 #endif  // PDF_ENABLE_XFA
 
 namespace {
@@ -22,14 +23,14 @@ const float kMinHeight = 1.0f;
 }  // namespace
 
 CPDFSDK_Annot::CPDFSDK_Annot(CPDFSDK_PageView* pPageView)
-    : m_pPageView(pPageView), m_bSelected(FALSE) {}
+    : m_pPageView(pPageView) {}
 
 CPDFSDK_Annot::~CPDFSDK_Annot() {}
 
 #ifdef PDF_ENABLE_XFA
 
-FX_BOOL CPDFSDK_Annot::IsXFAField() {
-  return FALSE;
+bool CPDFSDK_Annot::IsXFAField() {
+  return false;
 }
 
 CXFA_FFWidget* CPDFSDK_Annot::GetXFAWidget() const {
@@ -42,11 +43,11 @@ CPDFXFA_Page* CPDFSDK_Annot::GetPDFXFAPage() {
 
 #endif  // PDF_ENABLE_XFA
 
-FX_FLOAT CPDFSDK_Annot::GetMinWidth() const {
+float CPDFSDK_Annot::GetMinWidth() const {
   return kMinWidth;
 }
 
-FX_FLOAT CPDFSDK_Annot::GetMinHeight() const {
+float CPDFSDK_Annot::GetMinHeight() const {
   return kMinHeight;
 }
 
@@ -70,18 +71,6 @@ void CPDFSDK_Annot::SetRect(const CFX_FloatRect& rect) {}
 
 CFX_FloatRect CPDFSDK_Annot::GetRect() const {
   return CFX_FloatRect();
-}
-
-void CPDFSDK_Annot::Annot_OnDraw(CFX_RenderDevice* pDevice,
-                                 CFX_Matrix* pUser2Device,
-                                 CPDF_RenderOptions* pOptions) {}
-
-FX_BOOL CPDFSDK_Annot::IsSelected() {
-  return m_bSelected;
-}
-
-void CPDFSDK_Annot::SetSelected(FX_BOOL bSelected) {
-  m_bSelected = bSelected;
 }
 
 UnderlyingPageType* CPDFSDK_Annot::GetUnderlyingPage() {

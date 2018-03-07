@@ -4,9 +4,10 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fxge/include/fx_freetype.h"
+#include "core/fxge/fx_freetype.h"
 
-#include "third_party/freetype/src/psnames/pstables.h"
+#define DEFINE_PS_TABLES
+#include "third_party/freetype/include/pstables.h"
 
 static int xyq_search_node(char* glyph_name,
                            int name_offset,

@@ -4,64 +4,10 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fdrm/crypto/include/fx_crypt.h"
+#include "core/fdrm/crypto/fx_crypt.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-struct rc4_state {
-  int x, y, m[256];
-};
-void CRYPT_ArcFourSetup(void* context, const uint8_t* key, uint32_t length) {
-  rc4_state* s = (rc4_state*)context;
-  int i, j, k, *m, a;
-  s->x = 0;
-  s->y = 0;
-  m = s->m;
-  for (i = 0; i < 256; i++) {
-    m[i] = i;
-  }
-  j = k = 0;
-  for (i = 0; i < 256; i++) {
-    a = m[i];
-    j = (j + a + key[k]) & 0xFF;
-    m[i] = m[j];
-    m[j] = a;
-    if (++k >= (int)length) {
-      k = 0;
-    }
-  }
-}
-void CRYPT_ArcFourCrypt(void* context, unsigned char* data, uint32_t length) {
-  struct rc4_state* s = (struct rc4_state*)context;
-  int i, x, y, *m, a, b;
-  x = s->x;
-  y = s->y;
-  m = s->m;
-  for (i = 0; i < (int)length; i++) {
-    x = (x + 1) & 0xFF;
-    a = m[x];
-    y = (y + a) & 0xFF;
-    m[x] = b = m[y];
-    m[y] = a;
-    data[i] ^= m[(a + b) & 0xFF];
-  }
-  s->x = x;
-  s->y = y;
-}
-void CRYPT_ArcFourCryptBlock(uint8_t* pData,
-                             uint32_t size,
-                             const uint8_t* key,
-                             uint32_t keylen) {
-  rc4_state s;
-  CRYPT_ArcFourSetup(&s, key, keylen);
-  CRYPT_ArcFourCrypt(&s, pData, size);
-}
-struct md5_context {
-  uint32_t total[2];
-  uint32_t state[4];
-  uint8_t buffer[64];
-};
+#include <utility>
+
 #define GET_UINT32(n, b, i)                            \
   {                                                    \
     (n) = (uint32_t)((uint8_t*)b)[(i)] |               \
@@ -76,7 +22,15 @@ struct md5_context {
     (((uint8_t*)b)[(i) + 2]) = (uint8_t)(((n) >> 16) & 0xFF); \
     (((uint8_t*)b)[(i) + 3]) = (uint8_t)(((n) >> 24) & 0xFF); \
   }
-void md5_process(struct md5_context* ctx, const uint8_t data[64]) {
+
+namespace {
+
+const uint8_t md5_padding[64] = {
+    0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+void md5_process(CRYPT_md5_context* ctx, const uint8_t data[64]) {
   uint32_t A, B, C, D, X[16];
   GET_UINT32(X[0], data, 0);
   GET_UINT32(X[1], data, 4);
@@ -181,8 +135,43 @@ void md5_process(struct md5_context* ctx, const uint8_t data[64]) {
   ctx->state[2] += C;
   ctx->state[3] += D;
 }
-void CRYPT_MD5Start(void* context) {
-  struct md5_context* ctx = (struct md5_context*)context;
+
+}  // namespace
+
+void CRYPT_ArcFourSetup(CRYPT_rc4_context* s,
+                        const uint8_t* key,
+                        uint32_t length) {
+  s->x = 0;
+  s->y = 0;
+  for (int i = 0; i < kRC4ContextPermutationLength; ++i)
+    s->m[i] = i;
+
+  int j = 0;
+  for (int i = 0; i < kRC4ContextPermutationLength; ++i) {
+    j = (j + s->m[i] + (length ? key[i % length] : 0)) & 0xFF;
+    std::swap(s->m[i], s->m[j]);
+  }
+}
+
+void CRYPT_ArcFourCrypt(CRYPT_rc4_context* s, uint8_t* data, uint32_t length) {
+  for (uint32_t i = 0; i < length; ++i) {
+    s->x = (s->x + 1) & 0xFF;
+    s->y = (s->y + s->m[s->x]) & 0xFF;
+    std::swap(s->m[s->x], s->m[s->y]);
+    data[i] ^= s->m[(s->m[s->x] + s->m[s->y]) & 0xFF];
+  }
+}
+
+void CRYPT_ArcFourCryptBlock(uint8_t* pData,
+                             uint32_t size,
+                             const uint8_t* key,
+                             uint32_t keylen) {
+  CRYPT_rc4_context s;
+  CRYPT_ArcFourSetup(&s, key, keylen);
+  CRYPT_ArcFourCrypt(&s, pData, size);
+}
+
+void CRYPT_MD5Start(CRYPT_md5_context* ctx) {
   ctx->total[0] = 0;
   ctx->total[1] = 0;
   ctx->state[0] = 0x67452301;
@@ -190,8 +179,10 @@ void CRYPT_MD5Start(void* context) {
   ctx->state[2] = 0x98BADCFE;
   ctx->state[3] = 0x10325476;
 }
-void CRYPT_MD5Update(void* pctx, const uint8_t* input, uint32_t length) {
-  struct md5_context* ctx = (struct md5_context*)pctx;
+
+void CRYPT_MD5Update(CRYPT_md5_context* ctx,
+                     const uint8_t* input,
+                     uint32_t length) {
   uint32_t left, fill;
   if (!length) {
     return;
@@ -203,7 +194,7 @@ void CRYPT_MD5Update(void* pctx, const uint8_t* input, uint32_t length) {
   ctx->total[0] &= 0xFFFFFFFF;
   ctx->total[1] += ctx->total[0] < length << 3;
   if (left && length >= fill) {
-    FXSYS_memcpy((void*)(ctx->buffer + left), (void*)input, fill);
+    memcpy(ctx->buffer + left, input, fill);
     md5_process(ctx, ctx->buffer);
     length -= fill;
     input += fill;
@@ -215,15 +206,11 @@ void CRYPT_MD5Update(void* pctx, const uint8_t* input, uint32_t length) {
     input += 64;
   }
   if (length) {
-    FXSYS_memcpy((void*)(ctx->buffer + left), (void*)input, length);
+    memcpy(ctx->buffer + left, input, length);
   }
 }
-const uint8_t md5_padding[64] = {
-    0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-void CRYPT_MD5Finish(void* pctx, uint8_t digest[16]) {
-  struct md5_context* ctx = (struct md5_context*)pctx;
+
+void CRYPT_MD5Finish(CRYPT_md5_context* ctx, uint8_t digest[16]) {
   uint32_t last, padn;
   uint8_t msglen[8];
   PUT_UINT32(ctx->total[0], msglen, 0);
@@ -237,24 +224,12 @@ void CRYPT_MD5Finish(void* pctx, uint8_t digest[16]) {
   PUT_UINT32(ctx->state[2], digest, 8);
   PUT_UINT32(ctx->state[3], digest, 12);
 }
+
 void CRYPT_MD5Generate(const uint8_t* input,
                        uint32_t length,
                        uint8_t digest[16]) {
-  md5_context ctx;
+  CRYPT_md5_context ctx;
   CRYPT_MD5Start(&ctx);
   CRYPT_MD5Update(&ctx, input, length);
   CRYPT_MD5Finish(&ctx, digest);
 }
-static FX_BOOL (*g_PubKeyDecryptor)(const uint8_t* pData,
-                                    uint32_t size,
-                                    uint8_t* data_buf,
-                                    uint32_t& data_len) = nullptr;
-void CRYPT_SetPubKeyDecryptor(FX_BOOL (*func)(const uint8_t* pData,
-                                              uint32_t size,
-                                              uint8_t* data_buf,
-                                              uint32_t& data_len)) {
-  g_PubKeyDecryptor = func;
-}
-#ifdef __cplusplus
-};
-#endif

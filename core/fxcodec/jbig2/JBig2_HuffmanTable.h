@@ -9,7 +9,7 @@
 
 #include <vector>
 
-#include "core/fxcrt/include/fx_system.h"
+#include "core/fxcrt/fx_system.h"
 
 class CJBig2_BitStream;
 struct JBig2TableLine;
@@ -35,7 +35,7 @@ class CJBig2_HuffmanTable {
  private:
   void ParseFromStandardTable(const JBig2TableLine* pTable);
   bool ParseFromCodedBuffer(CJBig2_BitStream* pStream);
-  void InitCodes();
+  bool InitCodes();
   void ExtendBuffers(bool increment);
 
   bool m_bOK;

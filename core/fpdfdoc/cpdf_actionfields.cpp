@@ -4,11 +4,16 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fpdfdoc/include/cpdf_actionfields.h"
+#include "core/fpdfdoc/cpdf_actionfields.h"
 
-#include "core/fpdfapi/fpdf_parser/include/cpdf_array.h"
-#include "core/fpdfapi/fpdf_parser/include/cpdf_dictionary.h"
-#include "core/fpdfdoc/include/cpdf_action.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
+#include "core/fpdfapi/parser/cpdf_dictionary.h"
+#include "core/fpdfdoc/cpdf_action.h"
+
+CPDF_ActionFields::CPDF_ActionFields(const CPDF_Action* pAction)
+    : m_pAction(pAction) {}
+
+CPDF_ActionFields::~CPDF_ActionFields() {}
 
 size_t CPDF_ActionFields::GetFieldsCount() const {
   if (!m_pAction)
@@ -18,12 +23,12 @@ size_t CPDF_ActionFields::GetFieldsCount() const {
   if (!pDict)
     return 0;
 
-  CFX_ByteString csType = pDict->GetStringBy("S");
+  ByteString csType = pDict->GetStringFor("S");
   CPDF_Object* pFields = nullptr;
   if (csType == "Hide")
-    pFields = pDict->GetDirectObjectBy("T");
+    pFields = pDict->GetDirectObjectFor("T");
   else
-    pFields = pDict->GetArrayBy("Fields");
+    pFields = pDict->GetArrayFor("Fields");
 
   if (!pFields)
     return 0;
@@ -45,12 +50,12 @@ std::vector<CPDF_Object*> CPDF_ActionFields::GetAllFields() const {
   if (!pDict)
     return fields;
 
-  CFX_ByteString csType = pDict->GetStringBy("S");
+  ByteString csType = pDict->GetStringFor("S");
   CPDF_Object* pFields;
   if (csType == "Hide")
-    pFields = pDict->GetDirectObjectBy("T");
+    pFields = pDict->GetDirectObjectFor("T");
   else
-    pFields = pDict->GetArrayBy("Fields");
+    pFields = pDict->GetArrayFor("Fields");
 
   if (!pFields)
     return fields;
@@ -75,12 +80,12 @@ CPDF_Object* CPDF_ActionFields::GetField(size_t iIndex) const {
   if (!pDict)
     return nullptr;
 
-  CFX_ByteString csType = pDict->GetStringBy("S");
+  ByteString csType = pDict->GetStringFor("S");
   CPDF_Object* pFields = nullptr;
   if (csType == "Hide")
-    pFields = pDict->GetDirectObjectBy("T");
+    pFields = pDict->GetDirectObjectFor("T");
   else
-    pFields = pDict->GetArrayBy("Fields");
+    pFields = pDict->GetArrayFor("Fields");
 
   if (!pFields)
     return nullptr;

@@ -15,14 +15,13 @@ class CFWL_CaretTP : public CFWL_WidgetTP {
   ~CFWL_CaretTP() override;
 
   // CFWL_WidgetTP
-  bool IsValidWidget(IFWL_Widget* pWidget) override;
-  FX_BOOL DrawBackground(CFWL_ThemeBackground* pParams) override;
+  void DrawBackground(CFWL_ThemeBackground* pParams) override;
 
  protected:
-  void DrawCaretBK(CFX_Graphics* pGraphics,
+  void DrawCaretBK(CXFA_Graphics* pGraphics,
                    uint32_t dwStates,
                    const CFX_RectF* pRect,
-                   CFX_Color* crFill,
+                   CXFA_GEColor* crFill,
                    CFX_Matrix* pMatrix = nullptr);
 };
 

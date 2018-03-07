@@ -4,15 +4,14 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "fpdfsdk/include/pdfsdk_fieldaction.h"
+#include "fpdfsdk/pdfsdk_fieldaction.h"
 
 PDFSDK_FieldAction::PDFSDK_FieldAction()
-    : bModifier(FALSE),
-      bShift(FALSE),
-      nCommitKey(0),
-      bKeyDown(FALSE),
+    : bModifier(false),
+      bShift(false),
+      bKeyDown(false),
       nSelEnd(0),
       nSelStart(0),
-      bWillCommit(FALSE),
-      bFieldFull(FALSE),
-      bRC(TRUE) {}
+      bWillCommit(false),
+      bFieldFull(false),
+      bRC(true) {}

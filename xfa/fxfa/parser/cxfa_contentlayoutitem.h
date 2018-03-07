@@ -11,14 +11,14 @@
 
 class CXFA_ContentLayoutItem : public CXFA_LayoutItem {
  public:
-  CXFA_ContentLayoutItem(CXFA_Node* pNode);
+  explicit CXFA_ContentLayoutItem(CXFA_Node* pNode);
   ~CXFA_ContentLayoutItem() override;
 
   CXFA_ContentLayoutItem* m_pPrev;
   CXFA_ContentLayoutItem* m_pNext;
   CFX_PointF m_sPos;
   CFX_SizeF m_sSize;
-  uint32_t m_dwStatus;
+  mutable uint32_t m_dwStatus;
 };
 
 inline CXFA_ContentLayoutItem* ToContentLayoutItem(CXFA_LayoutItem* pItem) {
