@@ -21,4 +21,4 @@ RUN gn gen out/Lambda
 ADD args.gn out/Lambda
 RUN gn gen out/Lambda
 
-CMD ninja -C out/Lambda samples:pdfium
+CMD ninja -C out/Lambda samples:pandafium
