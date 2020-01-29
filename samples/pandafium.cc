@@ -223,16 +223,24 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
   /* Now we can initialize the JPEG compression object. */
   jpeg_create_compress(&cinfo);
   jpeg_stdio_dest(&cinfo, fp);
-  // Source data is B, G, R, unused.
+  // Source data is B, G, R, alpha.
   // Dest data is R, G, B.
   cinfo.image_width = image_width;      /* image width and height, in pixels */
   cinfo.image_height = image_height;
   cinfo.input_components = 4;           /* # of color components per pixel */
-  cinfo.in_color_space = JCS_EXT_BGRX;       /* colorspace of input image */
+  cinfo.in_color_space = JCS_EXT_BGRA;       /* colorspace of input image */
   /* Now use the library's routine to set default compression parameters.
    * (You must set at least cinfo.in_color_space before calling this,
    * since the defaults depend on the source color space.)
    */
+
+  // Convert pixels with opacity set to 0 (i.e. transparent) to white
+  for(int i = 0; i < width * height * 4; i += 4){
+    if(image_buffer[i+3] == 0){ // Pixel is completely transparent
+      image_buffer[i] = image_buffer[i+1] = image_buffer[i+2] = 255;
+    }
+  };
+
   jpeg_set_defaults(&cinfo);
 
   jpeg_start_compress(&cinfo, TRUE);
