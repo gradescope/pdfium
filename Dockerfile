@@ -26,3 +26,4 @@ RUN ninja -C out/Lambda samples:pandafium
 # Multistage build
 FROM lambci/lambda:build-python2.7
 COPY --from=0 /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
+CMD pandafium
