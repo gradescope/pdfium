@@ -109,6 +109,6 @@ executable("pandafium") {
 
   #cflags_cc = [ "-stdlib=libc++" ]
   deps += [ "../third_party:fx_lpng" ]
-  libs = [ "/usr/lib/x86_64-linux-gnu/libjpeg.a" ]
+  libs = [ "/usr/lib64/libjpeg.a"]
   configs += [ ":pdfium_samples_config" ]
 }
