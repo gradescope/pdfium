@@ -13,7 +13,9 @@ RUN mkdir /root/repo
 WORKDIR /root/repo
 RUN gclient config --unmanaged https://github.com/gradescope/pdfium.git && gclient sync
 WORKDIR /root/repo/pdfium
-RUN git fetch && git checkout ibrahim/dockerize-build
+
+ARG revision=pandafium
+RUN git fetch && git checkout $revision
 RUN gclient sync
 
 RUN build/linux/sysroot_scripts/install-sysroot.py --arch=amd64
