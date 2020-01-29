@@ -21,4 +21,8 @@ RUN gn gen out/Lambda
 ADD args.gn out/Lambda
 RUN gn gen out/Lambda
 
-CMD ninja -C out/Lambda samples:pandafium
+RUN ninja -C out/Lambda samples:pandafium
+
+# Multistage build
+FROM lambci/lambda:build-python2.7
+COPY --from=0 /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
