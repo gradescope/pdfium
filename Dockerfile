@@ -1,4 +1,4 @@
-FROM lambci/lambda:build-python2.7
+FROM lambci/lambda:build-python2.7 as build-environment
 
 RUN yum install -y git-all libjpeg-turbo-devel libjpeg-turbo-static freetype-devel
 
@@ -25,5 +25,5 @@ RUN ninja -C out/Lambda samples:pandafium
 
 # Multistage build
 FROM lambci/lambda:build-python2.7
-COPY --from=0 /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
+COPY --from=build-environment /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
 CMD pandafium
