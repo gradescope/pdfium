@@ -79,12 +79,13 @@ executable("pandafium") {
   deps = [
     "../:pdfium",
     "../testing/:test_support",
+    "../third_party/:jpeg",
     "//build/win:default_exe_manifest",
   ]
 
 
   #cflags_cc = [ "-stdlib=libc++" ]
   deps += [ "../third_party:fx_lpng" ]
-  libs = [ "/usr/lib64/libjpeg.a"]
+  # libs = [ "/usr/lib64/libjpeg.a"]
   configs += [ ":pdfium_samples_config" ]
 }
