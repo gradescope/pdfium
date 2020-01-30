@@ -9,21 +9,19 @@
 
 #include "xfa/fwl/theme/cfwl_widgettp.h"
 
-class CFWL_CaretTP : public CFWL_WidgetTP {
+class CFWL_CaretTP final : public CFWL_WidgetTP {
  public:
   CFWL_CaretTP();
   ~CFWL_CaretTP() override;
 
   // CFWL_WidgetTP
-  bool IsValidWidget(IFWL_Widget* pWidget) override;
-  FX_BOOL DrawBackground(CFWL_ThemeBackground* pParams) override;
+  void DrawBackground(const CFWL_ThemeBackground& pParams) override;
 
- protected:
-  void DrawCaretBK(CFX_Graphics* pGraphics,
+ private:
+  void DrawCaretBK(CXFA_Graphics* pGraphics,
                    uint32_t dwStates,
-                   const CFX_RectF* pRect,
-                   CFX_Color* crFill,
-                   CFX_Matrix* pMatrix = nullptr);
+                   const CFX_RectF& rect,
+                   const CFX_Matrix& matrix);
 };
 
 #endif  // XFA_FWL_THEME_CFWL_CARETTP_H_

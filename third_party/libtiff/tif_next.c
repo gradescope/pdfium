@@ -1,5 +1,3 @@
-/* $Id: tif_next.c,v 1.16 2014-12-29 12:09:11 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -72,7 +70,8 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		return (0);
 	}
 	for (row = buf; cc > 0 && occ > 0; occ -= scanline, row += scanline) {
-		n = *bp++, cc--;
+		n = *bp++;
+		cc--;
 		switch (n) {
 		case LITERALROW:
 			/*
@@ -103,10 +102,10 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		}
 		default: {
 			uint32 npixels = 0, grey;
+			tmsize_t op_offset = 0;
 			uint32 imagewidth = tif->tif_dir.td_imagewidth;
             if( isTiled(tif) )
                 imagewidth = tif->tif_dir.td_tilewidth;
-            tmsize_t op_offset = 0;
 
 			/*
 			 * The scanline is composed of a sequence of constant
@@ -134,7 +133,8 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
                 }
 				if (cc == 0)
 					goto bad;
-				n = *bp++, cc--;
+				n = *bp++;
+				cc--;
 			}
 			break;
 		}

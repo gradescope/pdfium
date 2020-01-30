@@ -3,89 +3,71 @@
 # found in the LICENSE file.
 
 import("//build/config/sanitizers/sanitizers.gni")
-import("//build_overrides/v8.gni")
 import("../pdfium.gni")
 
 group("samples") {
   testonly = true
-  deps = [
-    ":pdfium_diff",
-    ":pdfium_test",
-  ]
+  deps = [ ":pdfium_test" ]
 }
 
 config("pdfium_samples_config") {
+  cflags = []
+  ldflags = []
   defines = [
     "PNG_PREFIX",
     "PNG_USE_READ_MACROS",
   ]
   include_dirs = [ ".." ]
-  if (pdf_enable_v8) {
-    defines += [ "PDF_ENABLE_V8" ]
-  }
-  if (pdf_enable_xfa) {
-    defines += [ "PDF_ENABLE_XFA" ]
-  }
   if (pdf_use_skia) {
     defines += [ "PDF_ENABLE_SKIA" ]
+  } else if (pdf_use_skia_paths) {
+    defines += [ "PDF_ENABLE_SKIA_PATHS" ]
+  }
+  if (is_asan) {
+    defines += [ "PDF_ENABLE_ASAN" ]
+  }
+
+  if (enable_callgrind) {
+    defines += [ "ENABLE_CALLGRIND" ]
   }
 }
 
 executable("pdfium_test") {
   testonly = true
   sources = [
-    "image_diff_png.cc",
-    "image_diff_png.h",
     "pdfium_test.cc",
+    "pdfium_test_dump_helper.cc",
+    "pdfium_test_dump_helper.h",
+    "pdfium_test_event_helper.cc",
+    "pdfium_test_event_helper.h",
+    "pdfium_test_write_helper.cc",
+    "pdfium_test_write_helper.h",
   ]
-  deps = [
-    "../:pdfium",
-    "../:test_support",
-    "//build/config/sanitizers:deps",
-    "//build/win:default_exe_manifest",
 
-    # Regardless of whether the library ships against system freetype,
-    # always link this binary against the bundled one for consistency
-    # of results across platforms.
-    "../third_party:fx_freetype",
+  # Note: One should write programs that depend on ../:pdfium. Whereas this
+  # sample program does not set a good example, and depends on PDFium internals,
+  # as well as test support code, for convenience.
+  deps = [
+    "../:pdfium_public_headers",
+    "../fpdfsdk",
+    "../testing/:test_support",
+    "../testing/image_diff",
+    "../third_party:pdfium_base",
+    "//build/win:default_exe_manifest",
   ]
-  if (!pdf_enable_xfa) {
-    deps += [ "../third_party:fx_lpng" ]
-  }
+  configs += [ ":pdfium_samples_config" ]
+
   if (pdf_enable_v8) {
-    deps += [ "//v8:v8_libplatform" ]
-    include_dirs = [
-      "//v8",
-      "//v8/include",
+    deps += [
+      "//v8:v8_headers",
+      "//v8:v8_libplatform",
     ]
+    include_dirs = [ "//v8" ]
     configs += [ "//v8:external_startup_data" ]
   }
-  if (pdf_use_skia) {
+  if (pdf_use_skia || pdf_use_skia_paths) {
     deps += [ "//skia" ]
   }
-  configs += [ ":pdfium_samples_config" ]
-}
-
-executable("pdfium_diff") {
-  testonly = true
-  sources = [
-    "image_diff.cc",
-    "image_diff_png.cc",
-    "image_diff_png.h",
-  ]
-  deps = [
-    "../:pdfium",
-    "//build/config/sanitizers:deps",
-    "//build/win:default_exe_manifest",
-  ]
-  if (!pdf_enable_xfa) {
-    deps += [ "../third_party:fx_lpng" ]
-  }
-  configs -= [ "//build/config/compiler:chromium_code" ]
-  configs += [
-    ":pdfium_samples_config",
-    "//build/config/compiler:no_chromium_code",
-  ]
 }
 
 executable("pandafium") {

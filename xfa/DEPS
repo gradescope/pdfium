@@ -1,6 +1,7 @@
 include_rules = [
-  '+core/fxcrt/include',
-  '+core/fpdfapi/fpdf_parser/include',
-  '+core/fxge/include',
-  '+third_party/bigint'
+  '+core',
+  '+fxbarcode',
+
+  # xfa/fwl should be standalone. https://crbug.com/pdfium/507
+  '-xfa/fwl',
 ]

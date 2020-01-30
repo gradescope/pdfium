@@ -7,7 +7,7 @@
 #ifndef XFA_FGAS_FONT_FGAS_FONTUTILS_H_
 #define XFA_FGAS_FONT_FGAS_FONTUTILS_H_
 
-#include "core/fxcrt/include/fx_string.h"
+#include "core/fxcrt/widestring.h"
 
 struct FGAS_FONTUSB {
   uint16_t wStartUnicode;
@@ -16,10 +16,18 @@ struct FGAS_FONTUSB {
   uint16_t wCodePage;
 };
 
-uint32_t FGAS_GetFontHashCode(uint16_t wCodePage, uint32_t dwFontStyles);
-uint32_t FGAS_GetFontFamilyHash(const FX_WCHAR* pszFontFamily,
-                                uint32_t dwFontStyles,
-                                uint16_t wCodePage);
-const FGAS_FONTUSB* FGAS_GetUnicodeBitField(FX_WCHAR wUnicode);
+const FGAS_FONTUSB* FGAS_GetUnicodeBitField(wchar_t wUnicode);
+
+struct FGAS_FontInfo {
+  uint32_t dwFontNameHash;  // WideString hash.
+  const char* pPsName;
+  const char* pReplaceFont;
+  uint16_t dwStyles;
+  uint16_t wCodePage;
+};
+
+WideString FGAS_FontNameToEnglishName(WideStringView wsLocalName);
+
+const FGAS_FontInfo* FGAS_FontInfoByFontName(WideStringView wsFontName);
 
 #endif  // XFA_FGAS_FONT_FGAS_FONTUTILS_H_

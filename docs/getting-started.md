@@ -12,8 +12,8 @@ You will need the PDFium library on your computer. You can see the
 
 *** note
 You must compile PDFium without both V8 and XFA support for the examples
-here to work. V8 can be compiled out by providing
-`GYP_DEFINES="pdf_enable_v8=0 pdf_enable_xfa=0" build/gyp_pdfium`.
+here to work. V8 can be disabled by setting `pdf_enable_v8 = false` in the
+GN args.
 
 See the [V8 Getting Started][pdfium-v8] guide for how to
 initialize PDFium when V8 is compiled into the binary.
@@ -30,10 +30,10 @@ methods for initialization and destruction of the library.
 
 ## Initializing PDFium
 
-The first step to using PDFium is to initialize the library. Having done so,
-you'll need to destroy the library when you're finished. When initializing the
-library you provide the `FPDF_LIBRARY_CONFIG` parameters to
-`FPDF_InitLibraryWithConfig`.
+The first step to using PDFium is to initialize the library. Having done so, one
+must destroy the library with `FPDF_DestroyLibrary()` when finished. When
+initializing the library, provide the `FPDF_LIBRARY_CONFIG` parameters to
+`FPDF_InitLibraryWithConfig()`.
 
 ```c
 #include <fpdfview.h>
@@ -52,16 +52,19 @@ int main() {
 }
 ```
 
-Currently the `config.version` must be set to `2`. `m_pUserFontPaths` can be
-used to override the font paths searched by PDFium. If you wish to use your
-own font paths pass a `NULL` terminated list of `const char*` paths to use.
+Currently the `config.version` must be set to `2`. Older versions works for
+backwards compatibility, but will be deprecated eventually.
+
+`m_pUserFontPaths` can be used to override the font paths searched by PDFium. To
+use a custom font paths, pass a `NULL` terminated list of `const char*` paths to
+use.
 
 `m_pIsolate` and `m_v8EmbedderSlot` are both used to configure the V8
-javascript engine. In the first case, you can provide an isolate through
-`m_pIsolate` for PDFium to use to store per-isolate data. Passing `NULL` will
-case PDFium to allocate a new isolate. `m_v8EmbedderSlot` is the embedder data
-slot to use in the v8::Isolate to store PDFium data. The value must be between
-0 and v8::Internals::kNumIsolateDataSlots. Typically, 0 is a good choice.
+JavaScript engine. For the V8 isolate, either provide an isolate through
+`m_pIsolate` for PDFium to use to store per-isolate data, or pass `NULL` to tell
+PDFium to allocate a new isolate. `m_v8EmbedderSlot` is the embedder data slot
+to use in the v8::Isolate to store PDFium data. The value must be in the range
+[0, `v8::Internals::kNumIsolateDataSlots`). Typically, 0 is a good choice.
 
 For more information on using Javascript see the [V8 Getting Started][pdfium-v8]
 guide.
@@ -73,8 +76,7 @@ the link line in order to compile. My build line was:
 ```
 PDF_LIBS="-lpdfium -lfpdfapi -lfxge -lfpdfdoc -lfxcrt -lfx_agg \
 -lfxcodec -lfx_lpng -lfx_libopenjpeg -lfx_lcms2 -lfx_freetype -ljpeg \
--lfx_zlib -lfdrm -lpdfwindow -lbigint -lformfiller -ljavascript \
--lfxedit"
+-lfdrm -lpwl -lbigint -lformfiller -ljavascript -lfxedit"
 PDF_DIR=<path/to/pdfium>
 
 clang -I $PDF_DIR/public -o init init.c -L $PDF_DIR/out/Debug -lstdc++ -framework AppKit $PDF_LIBS

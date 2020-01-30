@@ -11,53 +11,47 @@
 
 #include "xfa/fwl/theme/cfwl_widgettp.h"
 
-class CFWL_ScrollBarTP : public CFWL_WidgetTP {
+class CFWL_ScrollBarTP final : public CFWL_WidgetTP {
  public:
   CFWL_ScrollBarTP();
   ~CFWL_ScrollBarTP() override;
 
   // CFWL_WidgetTP
-  bool IsValidWidget(IFWL_Widget* pWidget) override;
-  uint32_t SetThemeID(IFWL_Widget* pWidget,
-                      uint32_t dwThemeID,
-                      FX_BOOL bChildren = TRUE) override;
-  FX_BOOL DrawBackground(CFWL_ThemeBackground* pParams) override;
-  void* GetCapacity(CFWL_ThemePart* pThemePart,
-                    CFWL_WidgetCapacity dwCapacity) override;
+  void DrawBackground(const CFWL_ThemeBackground& pParams) override;
 
- protected:
+ private:
   struct SBThemeData {
+    FX_ARGB clrTrackBKStart;
+    FX_ARGB clrTrackBKEnd;
     FX_ARGB clrPawColorLight[4];
     FX_ARGB clrPawColorDark[4];
     FX_ARGB clrBtnBK[4][2];
     FX_ARGB clrBtnBorder[4];
-    FX_ARGB clrTrackBKStart;
-    FX_ARGB clrTrackBKEnd;
   };
 
-  void DrawThumbBtn(CFX_Graphics* pGraphics,
-                    const CFX_RectF* pRect,
-                    FX_BOOL bVert,
+  void DrawThumbBtn(CXFA_Graphics* pGraphics,
+                    const CFX_RectF& rect,
+                    bool bVert,
                     FWLTHEME_STATE eState,
-                    FX_BOOL bPawButton = TRUE,
-                    CFX_Matrix* pMatrix = nullptr);
-  void DrawTrack(CFX_Graphics* pGraphics,
-                 const CFX_RectF* pRect,
-                 FX_BOOL bVert,
+                    bool bPawButton,
+                    const CFX_Matrix& matrix);
+  void DrawTrack(CXFA_Graphics* pGraphics,
+                 const CFX_RectF& rect,
+                 bool bVert,
                  FWLTHEME_STATE eState,
-                 FX_BOOL bLowerTrack,
-                 CFX_Matrix* pMatrix = nullptr);
-  void DrawMaxMinBtn(CFX_Graphics* pGraphics,
-                     const CFX_RectF* pRect,
+                 bool bLowerTrack,
+                 const CFX_Matrix& matrix);
+  void DrawMaxMinBtn(CXFA_Graphics* pGraphics,
+                     const CFX_RectF& rect,
                      FWLTHEME_DIRECTION eDict,
                      FWLTHEME_STATE eState,
-                     CFX_Matrix* pMatrix = nullptr);
-  void DrawPaw(CFX_Graphics* pGraphics,
-               const CFX_RectF* pRect,
-               FX_BOOL bVert,
+                     const CFX_Matrix& matrix);
+  void DrawPaw(CXFA_Graphics* pGraphics,
+               const CFX_RectF& rect,
+               bool bVert,
                FWLTHEME_STATE eState,
-               CFX_Matrix* pMatrix = nullptr);
-  void SetThemeData(uint32_t dwID);
+               const CFX_Matrix& matrix);
+  void SetThemeData();
 
   std::unique_ptr<SBThemeData> m_pThemeData;
 };

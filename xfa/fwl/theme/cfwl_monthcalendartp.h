@@ -7,52 +7,37 @@
 #ifndef XFA_FWL_THEME_CFWL_MONTHCALENDARTP_H_
 #define XFA_FWL_THEME_CFWL_MONTHCALENDARTP_H_
 
-#include <memory>
-
 #include "xfa/fwl/theme/cfwl_widgettp.h"
 
-class CFWL_MonthCalendarTP : public CFWL_WidgetTP {
+class CFWL_MonthCalendarTP final : public CFWL_WidgetTP {
  public:
   CFWL_MonthCalendarTP();
   ~CFWL_MonthCalendarTP() override;
 
   // CFWL_WidgetTP
-  bool IsValidWidget(IFWL_Widget* pWidget) override;
-  uint32_t SetThemeID(IFWL_Widget* pWidget,
-                      uint32_t dwThemeID,
-                      FX_BOOL bChildren = TRUE) override;
-  FX_BOOL DrawBackground(CFWL_ThemeBackground* pParams) override;
-  FX_BOOL DrawText(CFWL_ThemeText* pParams) override;
-  void* GetCapacity(CFWL_ThemePart* pThemePart,
-                    CFWL_WidgetCapacity dwCapacity) override;
-  FWL_Error Initialize() override;
-  FWL_Error Finalize() override;
+  void DrawBackground(const CFWL_ThemeBackground& pParams) override;
+  void DrawText(const CFWL_ThemeText& pParams) override;
 
- protected:
-  struct MCThemeData {
-    FX_ARGB clrCaption;
-    FX_ARGB clrSeperator;
-    FX_ARGB clrDatesHoverBK;
-    FX_ARGB clrDatesSelectedBK;
-    FX_ARGB clrDatesCircle;
-    FX_ARGB clrToday;
-    FX_ARGB clrBK;
-  };
-
-  FX_BOOL DrawTotalBK(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawHeadBk(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawLButton(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawRButton(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawDatesInBK(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawDatesInCircle(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawTodayCircle(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawHSeperator(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
-  FX_BOOL DrawWeekNumSep(CFWL_ThemeBackground* pParams, CFX_Matrix* pMatrix);
+ private:
+  void DrawTotalBK(const CFWL_ThemeBackground& pParams,
+                   const CFX_Matrix& matrix);
+  void DrawHeadBk(const CFWL_ThemeBackground& pParams,
+                  const CFX_Matrix& matrix);
+  void DrawLButton(const CFWL_ThemeBackground& pParams,
+                   const CFX_Matrix& matrix);
+  void DrawRButton(const CFWL_ThemeBackground& pParams,
+                   const CFX_Matrix& matrix);
+  void DrawDatesInBK(const CFWL_ThemeBackground& pParams,
+                     const CFX_Matrix& matrix);
+  void DrawDatesInCircle(const CFWL_ThemeBackground& pParams,
+                         const CFX_Matrix& matrix);
+  void DrawTodayCircle(const CFWL_ThemeBackground& pParams,
+                       const CFX_Matrix& matrix);
+  void DrawHSeparator(const CFWL_ThemeBackground& pParams,
+                      const CFX_Matrix& matrix);
+  void DrawWeekNumSep(const CFWL_ThemeBackground& pParams,
+                      const CFX_Matrix& matrix);
   FWLTHEME_STATE GetState(uint32_t dwFWLStates);
-  void SetThemeData(uint32_t dwThemeID);
-
-  std::unique_ptr<MCThemeData> m_pThemeData;
-  CFX_WideString wsResource;
 };
 
 #endif  // XFA_FWL_THEME_CFWL_MONTHCALENDARTP_H_

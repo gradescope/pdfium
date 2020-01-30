@@ -4,34 +4,41 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fxcrt/include/fx_system.h"
-
-#if _FX_OS_ == _FX_ANDROID_
+#include "core/fxge/cfx_gemodule.h"
 
 #include <memory>
 #include <utility>
 
-#include "core/fxge/android/fpf_skiamodule.h"
-#include "core/fxge/android/fx_android_font.h"
-#include "core/fxge/include/cfx_gemodule.h"
+#include "core/fxge/android/cfpf_skiadevicemodule.h"
+#include "core/fxge/android/cfx_androidfontinfo.h"
+#include "core/fxge/cfx_fontmgr.h"
+#include "third_party/base/ptr_util.h"
 
-void CFX_GEModule::InitPlatform() {
-  CFPF_SkiaDeviceModule* pDeviceModule = CFPF_GetSkiaDeviceModule();
-  if (!pDeviceModule)
-    return;
-
-  CFPF_SkiaFontMgr* pFontMgr = pDeviceModule->GetFontMgr();
-  if (pFontMgr) {
-    std::unique_ptr<CFX_AndroidFontInfo> pFontInfo(new CFX_AndroidFontInfo);
-    pFontInfo->Init(pFontMgr);
-    m_pFontMgr->SetSystemFontInfo(std::move(pFontInfo));
+class CAndroidPlatform : public CFX_GEModule::PlatformIface {
+ public:
+  CAndroidPlatform() = default;
+  ~CAndroidPlatform() override {
+    if (m_pDeviceModule)
+      m_pDeviceModule->Destroy();
   }
-  m_pPlatformData = pDeviceModule;
-}
 
-void CFX_GEModule::DestroyPlatform() {
-  if (m_pPlatformData)
-    static_cast<CFPF_SkiaDeviceModule*>(m_pPlatformData)->Destroy();
-}
+  void Init() override {
+    m_pDeviceModule = CFPF_GetSkiaDeviceModule();
+    CFPF_SkiaFontMgr* pFontMgr = m_pDeviceModule->GetFontMgr();
+    if (!pFontMgr)
+      return;
 
-#endif  // _FX_OS_ == _FX_ANDROID_
+    auto pFontInfo = pdfium::MakeUnique<CFX_AndroidFontInfo>();
+    pFontInfo->Init(pFontMgr);
+    CFX_GEModule::Get()->GetFontMgr()->SetSystemFontInfo(std::move(pFontInfo));
+  }
+
+ private:
+  CFPF_SkiaDeviceModule* m_pDeviceModule = nullptr;
+};
+
+// static
+std::unique_ptr<CFX_GEModule::PlatformIface>
+CFX_GEModule::PlatformIface::Create() {
+  return pdfium::MakeUnique<CAndroidPlatform>();
+}

@@ -11,9 +11,9 @@
 #include <vector>
 
 #include "testing/embedder_test.h"
-#include "testing/test_support.h"
+#include "testing/fx_string_testhelpers.h"
 
-class EmbedderTestTimerHandlingDelegate : public EmbedderTest::Delegate {
+class EmbedderTestTimerHandlingDelegate final : public EmbedderTest::Delegate {
  public:
   struct AlertRecord {
     std::wstring message;
@@ -38,9 +38,11 @@ class EmbedderTestTimerHandlingDelegate : public EmbedderTest::Delegate {
   }
 
   int SetTimer(int msecs, TimerCallback fn) override {
-    expiry_to_timer_map_.insert(std::pair<int, Timer>(
-        msecs + fake_elapsed_msecs_, {++next_timer_id_, msecs, fn}));
-    return next_timer_id_;
+    int id = fail_next_timer_ ? 0 : ++next_timer_id_;
+    expiry_to_timer_map_.insert(
+        std::pair<int, Timer>(msecs + fake_elapsed_msecs_, {id, msecs, fn}));
+    fail_next_timer_ = false;
+    return id;
   }
 
   void KillTimer(int id) override {
@@ -73,8 +75,11 @@ class EmbedderTestTimerHandlingDelegate : public EmbedderTest::Delegate {
 
   const std::vector<AlertRecord>& GetAlerts() const { return alerts_; }
 
- protected:
+  void SetFailNextTimer() { fail_next_timer_ = true; }
+
+ private:
   std::multimap<int, Timer> expiry_to_timer_map_;  // Keyed by timeout.
+  bool fail_next_timer_ = false;
   int next_timer_id_ = 0;
   int fake_elapsed_msecs_ = 0;
   std::vector<AlertRecord> alerts_;

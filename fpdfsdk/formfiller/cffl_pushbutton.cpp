@@ -6,32 +6,22 @@
 
 #include "fpdfsdk/formfiller/cffl_pushbutton.h"
 
+#include <utility>
+
 #include "fpdfsdk/formfiller/cffl_formfiller.h"
-#include "fpdfsdk/pdfwindow/PWL_SpecialButton.h"
+#include "fpdfsdk/pwl/cpwl_special_button.h"
+#include "third_party/base/ptr_util.h"
 
-CFFL_PushButton::CFFL_PushButton(CPDFDoc_Environment* pApp,
-                                 CPDFSDK_Annot* pAnnot)
-    : CFFL_Button(pApp, pAnnot) {}
+CFFL_PushButton::CFFL_PushButton(CPDFSDK_FormFillEnvironment* pApp,
+                                 CPDFSDK_Widget* pWidget)
+    : CFFL_Button(pApp, pWidget) {}
 
-CFFL_PushButton::~CFFL_PushButton() {}
+CFFL_PushButton::~CFFL_PushButton() = default;
 
-CPWL_Wnd* CFFL_PushButton::NewPDFWindow(const PWL_CREATEPARAM& cp,
-                                        CPDFSDK_PageView* pPageView) {
-  CPWL_PushButton* pWnd = new CPWL_PushButton();
-  pWnd->Create(cp);
-
-  return pWnd;
-}
-
-FX_BOOL CFFL_PushButton::OnChar(CPDFSDK_Annot* pAnnot,
-                                FX_UINT nChar,
-                                FX_UINT nFlags) {
-  return CFFL_FormFiller::OnChar(pAnnot, nChar, nFlags);
-}
-
-void CFFL_PushButton::OnDraw(CPDFSDK_PageView* pPageView,
-                             CPDFSDK_Annot* pAnnot,
-                             CFX_RenderDevice* pDevice,
-                             CFX_Matrix* pUser2Device) {
-  CFFL_Button::OnDraw(pPageView, pAnnot, pDevice, pUser2Device);
+std::unique_ptr<CPWL_Wnd> CFFL_PushButton::NewPWLWindow(
+    const CPWL_Wnd::CreateParams& cp,
+    std::unique_ptr<IPWL_SystemHandler::PerWindowData> pAttachedData) {
+  auto pWnd = pdfium::MakeUnique<CPWL_PushButton>(cp, std::move(pAttachedData));
+  pWnd->Realize();
+  return std::move(pWnd);
 }
