@@ -1,4 +1,4 @@
-FROM lambci/lambda:build-python2.7
+FROM lambci/lambda:build-python2.7 as build-environment
 
 RUN yum install -y git-all libjpeg-turbo-devel libjpeg-turbo-static freetype-devel
 
@@ -13,7 +13,9 @@ RUN mkdir /root/repo
 WORKDIR /root/repo
 RUN gclient config --unmanaged https://github.com/gradescope/pdfium.git && gclient sync
 WORKDIR /root/repo/pdfium
-RUN git fetch && git checkout ibrahim/dockerize-build
+
+ARG revision=pandafium
+RUN git fetch && git checkout $revision
 RUN gclient sync
 
 RUN build/linux/sysroot_scripts/install-sysroot.py --arch=amd64
@@ -25,5 +27,5 @@ RUN ninja -C out/Lambda samples:pandafium
 
 # Multistage build
 FROM lambci/lambda:build-python2.7
-COPY --from=0 /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
+COPY --from=build-environment /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
 CMD pandafium
