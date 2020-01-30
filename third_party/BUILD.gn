@@ -385,6 +385,7 @@ group("libopenjpeg2") {
   } else {
     public_deps = [ ":fx_libopenjpeg" ]
   }
+}
 config("fx_libopenjpeg_warnings") {
   visibility = [ ":*" ]
   if (is_win) {
