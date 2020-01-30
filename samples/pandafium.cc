@@ -233,7 +233,6 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
    * (You must set at least cinfo.in_color_space before calling this,
    * since the defaults depend on the source color space.)
    */
-
   jpeg_set_defaults(&cinfo);
 
   jpeg_start_compress(&cinfo, TRUE);
