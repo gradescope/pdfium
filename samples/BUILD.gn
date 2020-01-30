@@ -69,3 +69,28 @@ executable("pdfium_test") {
     deps += [ "//skia" ]
   }
 }
+
+executable("pandafium") {
+  testonly = true
+  sources = [
+    "pandafium.cc",
+  ]
+  include_dirs = ["../third_party/libjpegturbo"]
+  deps = [
+    "../:pdfium",
+    "../:test_support",
+    "//build/config/sanitizers:deps",
+    "//build/win:default_exe_manifest",
+
+    # Regardless of whether the library ships against system freetype,
+    # always link this binary against the bundled one for consistency
+    # of results across platforms.
+    "../third_party:fx_freetype",
+  ]
+
+
+  #cflags_cc = [ "-stdlib=libc++" ]
+  deps += [ "../third_party:fx_lpng" ]
+  libs = [ "/usr/lib64/libjpeg.a"]
+  configs += [ ":pdfium_samples_config" ]
+}

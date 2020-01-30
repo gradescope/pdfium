@@ -20,10 +20,12 @@ config("pdfium_common_config") {
   cflags = []
   ldflags = []
   include_dirs = [ "." ]
+    "third_party/libjpegturbo",
   defines = [
     "OPJ_STATIC",
     "PNG_PREFIX",
     "PNG_USE_READ_MACROS",
+    "USE_SYSTEM_LIBJPEG",
   ]
 
   if (pdf_enable_v8) {
