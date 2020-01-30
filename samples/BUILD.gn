@@ -79,13 +79,7 @@ executable("pandafium") {
   deps = [
     "../:pdfium",
     "../testing/:test_support",
-    "//build/config/sanitizers:deps",
     "//build/win:default_exe_manifest",
-
-    # Regardless of whether the library ships against system freetype,
-    # always link this binary against the bundled one for consistency
-    # of results across platforms.
-    "../third_party:fx_freetype",
   ]
 
 
