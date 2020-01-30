@@ -11,11 +11,15 @@ ENV PATH="/opt/depot_tools:${PATH}"
 
 RUN mkdir /root/repo
 WORKDIR /root/repo
-ARG revision=pandafium
-RUN gclient config --unmanaged --name pdfium https://github.com/gradescope/pdfium.git@origin/$revision
-RUN gclient sync
+
+RUN gclient config --unmanaged --name pdfium https://github.com/gradescope/pdfium.git
+ADD . / pdfium/
 
 WORKDIR /root/repo/pdfium
+ARG revision=HEAD
+RUN git remote set-url origin https://github.com/gradescope/pdfium.git
+RUN git fetch && git checkout $revision
+RUN gclient sync
 
 RUN build/linux/sysroot_scripts/install-sysroot.py --arch=amd64
 RUN gn gen out/Lambda
