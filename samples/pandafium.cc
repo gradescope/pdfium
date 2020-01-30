@@ -234,13 +234,6 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
    * since the defaults depend on the source color space.)
    */
 
-  // Convert pixels with opacity set to 0 (i.e. transparent) to white
-  for(int i = 0; i < width * height * 4; i += 4){
-    if(image_buffer[i+3] == 0){ // Pixel is completely transparent
-      image_buffer[i] = image_buffer[i+1] = image_buffer[i+2] = 255;
-    }
-  };
-
   jpeg_set_defaults(&cinfo);
 
   jpeg_start_compress(&cinfo, TRUE);
@@ -248,6 +241,13 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
   row_stride = image_width * 4; /* JSAMPLEs per row in image_buffer */
 
   while (cinfo.next_scanline < cinfo.image_height) {
+      // Convert pixels with opacity set to 0 (i.e. transparent) to white
+      int row_base = cinfo.next_scanline * row_stride;
+      for(int i = row_base; i < row_base + row_stride; i += 4) {
+          if(image_buffer[i+3] == 0){ // Pixel is completely transparent
+              image_buffer[i] = image_buffer[i+1] = image_buffer[i+2] = 255;
+          }
+      }
       /* jpeg_write_scanlines expects an array of pointers to scanlines.
        * Here the array is only one element long, but you could pass
        * more than one scanline at a time if that's more convenient.
