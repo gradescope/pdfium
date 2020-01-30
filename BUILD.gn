@@ -17,8 +17,10 @@ group("freetype_common") {
 config("pdfium_common_config") {
   cflags = []
   ldflags = []
-  include_dirs = [ "." ]
+  include_dirs = [
+    ".",
     "third_party/libjpegturbo",
+  ]
   defines = [
     "PNG_PREFIX",
     "PNG_USE_READ_MACROS",
