@@ -22,6 +22,7 @@
 
 #include "testing/test_loader.h"
 #include "testing/free_deleter.h"
+#include "testing/utils/file_util.h"
 #include "jpeglib.h"
 
 #define START_PAGE_NUMBER 1
