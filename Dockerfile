@@ -14,9 +14,12 @@ WORKDIR /root/repo
 
 RUN gclient config --unmanaged --name pdfium https://github.com/gradescope/pdfium.git
 ADD . / pdfium/
-RUN gclient sync
 
 WORKDIR /root/repo/pdfium
+ARG revision=HEAD
+RUN git remote set-url origin https://github.com/gradescope/pdfium.git
+RUN git fetch && git checkout $revision
+RUN gclient sync
 
 RUN build/linux/sysroot_scripts/install-sysroot.py --arch=amd64
 RUN gn gen out/Lambda
