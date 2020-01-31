@@ -1,7 +1,7 @@
 FROM lambci/lambda:build-python2.7 as build-environment
 
 RUN yum remove -y gcc48
-RUN yum install -y git-all libjpeg-turbo-devel libjpeg-turbo-static freetype-devel gcc72-c++
+RUN yum install -y git-all freetype-devel gcc72-c++
 
 WORKDIR /opt
 RUN mkdir depot_tools
