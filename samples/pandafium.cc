@@ -25,6 +25,8 @@
 #include "testing/utils/file_util.h"
 #include "jpeglib.h"
 
+#include "version.h"
+
 #define START_PAGE_NUMBER 1
 
 // Hold a map of the currently loaded pages in order to avoid them
@@ -153,6 +155,8 @@ bool ParseCommandLine(const std::vector<std::string>& args,
 
       int last = std::stoi(cur_arg.substr(7));
       options->last_page = last;
+    } else if (cur_arg.size() >= 9 && cur_arg.compare(0, 9, "--version") == 0) {
+        fprintf(stdout, "Version: %s\n", VERSION);
     } else if (cur_arg.size() >= 2 && cur_arg[0] == '-' && cur_arg[1] == '-') {
       fprintf(stderr, "Unrecognized argument %s\n", cur_arg.c_str());
       return false;
