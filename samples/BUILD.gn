@@ -88,15 +88,23 @@ executable("pdfium_diff") {
   ]
 }
 
+version_file = "$target_gen_dir/version.h"
+action("version_file") {
+  script = "git_version.py"
+  outputs = [ version_file ]
+  args = rebase_path(outputs)
+}
+
 executable("pandafium") {
   testonly = true
   sources = [
     "pandafium.cc",
   ]
-  include_dirs = ["../third_party/libjpegturbo"]
+  include_dirs = [ "$target_gen_dir", "../third_party/libjpegturbo" ]
   deps = [
     "../:pdfium",
     "../:test_support",
+    ":version_file",
     "//build/config/sanitizers:deps",
     "//build/win:default_exe_manifest",
 
