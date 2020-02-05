@@ -104,7 +104,7 @@ executable("pandafium") {
   deps = [
     "../:pdfium",
     "../:test_support",
-    ":version_file"
+    ":version_file",
     "//build/config/sanitizers:deps",
     "//build/win:default_exe_manifest",
 
