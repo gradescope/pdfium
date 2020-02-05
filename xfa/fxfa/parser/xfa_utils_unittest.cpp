@@ -2,10 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "testing/gtest/include/gtest/gtest.h"
 #include "xfa/fxfa/parser/xfa_utils.h"
 
-TEST(XfaUtilsImp, XFA_MapRotation) {
+#include "testing/gtest/include/gtest/gtest.h"
+
+TEST(XfaUtilsImpTest, XFA_MapRotation) {
   struct TestCase {
     int input;
     int expected_output;

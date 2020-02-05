@@ -4,50 +4,31 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "fpdfsdk/include/cpdfsdk_annot.h"
+#include "fpdfsdk/cpdfsdk_annot.h"
 
 #include <algorithm>
 
-#include "fpdfsdk/include/fsdk_mgr.h"
-
-#ifdef PDF_ENABLE_XFA
-#include "fpdfsdk/fpdfxfa/include/fpdfxfa_doc.h"
-#endif  // PDF_ENABLE_XFA
-
-namespace {
-
-const float kMinWidth = 1.0f;
-const float kMinHeight = 1.0f;
-
-}  // namespace
+#include "fpdfsdk/cpdfsdk_pageview.h"
 
 CPDFSDK_Annot::CPDFSDK_Annot(CPDFSDK_PageView* pPageView)
-    : m_pPageView(pPageView), m_bSelected(FALSE) {}
+    : m_pPageView(pPageView) {}
 
 CPDFSDK_Annot::~CPDFSDK_Annot() {}
 
-#ifdef PDF_ENABLE_XFA
-
-FX_BOOL CPDFSDK_Annot::IsXFAField() {
-  return FALSE;
-}
-
-CXFA_FFWidget* CPDFSDK_Annot::GetXFAWidget() const {
+CPDFSDK_BAAnnot* CPDFSDK_Annot::AsBAAnnot() {
   return nullptr;
 }
 
-CPDFXFA_Page* CPDFSDK_Annot::GetPDFXFAPage() {
-  return m_pPageView ? m_pPageView->GetPDFXFAPage() : nullptr;
+CPDFXFA_Widget* CPDFSDK_Annot::AsXFAWidget() {
+  return nullptr;
 }
 
-#endif  // PDF_ENABLE_XFA
-
-FX_FLOAT CPDFSDK_Annot::GetMinWidth() const {
-  return kMinWidth;
-}
-
-FX_FLOAT CPDFSDK_Annot::GetMinHeight() const {
-  return kMinHeight;
+IPDF_Page* CPDFSDK_Annot::GetXFAPage() {
+#ifdef PDF_ENABLE_XFA
+  if (m_pPageView)
+    return m_pPageView->GetXFAPage();
+#endif
+  return nullptr;
 }
 
 int CPDFSDK_Annot::GetLayoutOrder() const {
@@ -72,24 +53,13 @@ CFX_FloatRect CPDFSDK_Annot::GetRect() const {
   return CFX_FloatRect();
 }
 
-void CPDFSDK_Annot::Annot_OnDraw(CFX_RenderDevice* pDevice,
-                                 CFX_Matrix* pUser2Device,
-                                 CPDF_RenderOptions* pOptions) {}
-
-FX_BOOL CPDFSDK_Annot::IsSelected() {
-  return m_bSelected;
-}
-
-void CPDFSDK_Annot::SetSelected(FX_BOOL bSelected) {
-  m_bSelected = bSelected;
-}
-
-UnderlyingPageType* CPDFSDK_Annot::GetUnderlyingPage() {
+IPDF_Page* CPDFSDK_Annot::GetPage() {
 #ifdef PDF_ENABLE_XFA
-  return GetPDFXFAPage();
-#else   // PDF_ENABLE_XFA
-  return GetPDFPage();
+  IPDF_Page* pXFAPage = GetXFAPage();
+  if (pXFAPage)
+    return pXFAPage;
 #endif  // PDF_ENABLE_XFA
+  return GetPDFPage();
 }
 
 CPDF_Page* CPDFSDK_Annot::GetPDFPage() {

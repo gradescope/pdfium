@@ -20,7 +20,9 @@
 #include "public/fpdf_text.h"
 #include "public/fpdfview.h"
 
-#include "testing/test_support.h"
+#include "testing/test_loader.h"
+#include "testing/free_deleter.h"
+#include "testing/utils/file_util.h"
 #include "jpeglib.h"
 
 #include "version.h"
@@ -324,7 +326,7 @@ void RenderPdf(const std::string& name,
   form_callbacks.FFI_GetPage = GetPageForIndex;
   form_callbacks.m_pJsPlatform = &platform_callbacks;
 
-  TestLoader loader(pBuf, len);
+  TestLoader loader({pBuf, len});
   FPDF_FILEACCESS file_access;
   memset(&file_access, '\0', sizeof(file_access));
   file_access.m_FileLen = static_cast<unsigned long>(len);

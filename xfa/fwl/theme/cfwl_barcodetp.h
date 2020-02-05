@@ -10,14 +10,13 @@
 #include "xfa/fwl/theme/cfwl_utils.h"
 #include "xfa/fwl/theme/cfwl_widgettp.h"
 
-class CFWL_BarcodeTP : public CFWL_WidgetTP {
+class CFWL_BarcodeTP final : public CFWL_WidgetTP {
  public:
   CFWL_BarcodeTP();
   ~CFWL_BarcodeTP() override;
 
   // CFWL_WidgetTP
-  bool IsValidWidget(IFWL_Widget* pWidget) override;
-  FX_BOOL DrawBackground(CFWL_ThemeBackground* pParams) override;
+  void DrawBackground(const CFWL_ThemeBackground& pParams) override;
 };
 
 #endif  // XFA_FWL_THEME_CFWL_BARCODETP_H_

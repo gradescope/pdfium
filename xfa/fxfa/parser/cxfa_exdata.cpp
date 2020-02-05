@@ -1,4 +1,4 @@
-// Copyright 2016 PDFium Authors. All rights reserved.
+// Copyright 2017 PDFium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -6,10 +6,38 @@
 
 #include "xfa/fxfa/parser/cxfa_exdata.h"
 
-#include "xfa/fxfa/parser/xfa_object.h"
+#include "fxjs/xfa/cjx_object.h"
+#include "third_party/base/ptr_util.h"
 
-CXFA_ExData::CXFA_ExData(CXFA_Node* pNode) : CXFA_Data(pNode) {}
+namespace {
 
-FX_BOOL CXFA_ExData::SetContentType(const CFX_WideString& wsContentType) {
-  return m_pNode->SetCData(XFA_ATTRIBUTE_ContentType, wsContentType);
+const CXFA_Node::AttributeData kExDataAttributeData[] = {
+    {XFA_Attribute::Id, XFA_AttributeType::CData, nullptr},
+    {XFA_Attribute::Name, XFA_AttributeType::CData, nullptr},
+    {XFA_Attribute::Rid, XFA_AttributeType::CData, nullptr},
+    {XFA_Attribute::Use, XFA_AttributeType::CData, nullptr},
+    {XFA_Attribute::ContentType, XFA_AttributeType::CData, nullptr},
+    {XFA_Attribute::TransferEncoding, XFA_AttributeType::Enum,
+     (void*)XFA_AttributeValue::None},
+    {XFA_Attribute::Usehref, XFA_AttributeType::CData, nullptr},
+    {XFA_Attribute::MaxLength, XFA_AttributeType::Integer, (void*)-1},
+    {XFA_Attribute::Href, XFA_AttributeType::CData, nullptr},
+};
+
+}  // namespace
+
+CXFA_ExData::CXFA_ExData(CXFA_Document* doc, XFA_PacketType packet)
+    : CXFA_Node(doc,
+                packet,
+                (XFA_XDPPACKET_Template | XFA_XDPPACKET_Form),
+                XFA_ObjectType::ContentNode,
+                XFA_Element::ExData,
+                {},
+                kExDataAttributeData,
+                pdfium::MakeUnique<CJX_Object>(this)) {}
+
+CXFA_ExData::~CXFA_ExData() = default;
+
+void CXFA_ExData::SetContentType(const WideString& wsContentType) {
+  JSObject()->SetCData(XFA_Attribute::ContentType, wsContentType, false, false);
 }
