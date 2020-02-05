@@ -7,28 +7,32 @@
 #ifndef CORE_FXCODEC_CODEC_CCODEC_TIFFMODULE_H_
 #define CORE_FXCODEC_CODEC_CCODEC_TIFFMODULE_H_
 
-#include "core/fxcrt/include/fx_system.h"
+#include <memory>
 
-class CCodec_TiffContext;
+#include "core/fxcrt/fx_system.h"
+#include "core/fxcrt/retain_ptr.h"
+#include "core/fxge/dib/cfx_dibitmap.h"
+
 class CFX_DIBAttribute;
-class CFX_DIBitmap;
-class IFX_FileRead;
+class IFX_SeekableReadStream;
 
 class CCodec_TiffModule {
  public:
-  ~CCodec_TiffModule() {}
+  class Context {
+   public:
+    virtual ~Context() {}
+  };
 
-  CCodec_TiffContext* CreateDecoder(IFX_FileRead* file_ptr);
-
-  bool LoadFrameInfo(CCodec_TiffContext* ctx,
+  std::unique_ptr<Context> CreateDecoder(
+      const RetainPtr<IFX_SeekableReadStream>& file_ptr);
+  bool LoadFrameInfo(Context* ctx,
                      int32_t frame,
                      int32_t* width,
                      int32_t* height,
                      int32_t* comps,
                      int32_t* bpc,
                      CFX_DIBAttribute* pAttribute);
-  bool Decode(CCodec_TiffContext* ctx, class CFX_DIBitmap* pDIBitmap);
-  void DestroyDecoder(CCodec_TiffContext* ctx);
+  bool Decode(Context* ctx, const RetainPtr<CFX_DIBitmap>& pDIBitmap);
 };
 
 #endif  // CORE_FXCODEC_CODEC_CCODEC_TIFFMODULE_H_

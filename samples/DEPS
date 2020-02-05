@@ -1,7 +1,6 @@
 include_rules = [
+  '+core/fxcrt',
   '+public',
-  '+third_party/libpng16',
   '+third_party/skia/include',
-  '+third_party/zlib_v128',
   '+v8',
 ]

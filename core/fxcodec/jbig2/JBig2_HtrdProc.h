@@ -7,32 +7,35 @@
 #ifndef CORE_FXCODEC_JBIG2_JBIG2_HTRDPROC_H_
 #define CORE_FXCODEC_JBIG2_JBIG2_HTRDPROC_H_
 
+#include <memory>
+#include <vector>
+
 #include "core/fxcodec/jbig2/JBig2_Image.h"
-#include "core/fxcrt/include/fx_system.h"
+#include "core/fxcrt/fx_system.h"
 
 class CJBig2_ArithDecoder;
 class CJBig2_BitStream;
-class IFX_Pause;
-struct JBig2ArithCtx;
+class JBig2ArithCtx;
+class PauseIndicatorIface;
 
 class CJBig2_HTRDProc {
  public:
-  CJBig2_Image* decode_Arith(CJBig2_ArithDecoder* pArithDecoder,
-                             JBig2ArithCtx* gbContext,
-                             IFX_Pause* pPause);
+  std::unique_ptr<CJBig2_Image> DecodeArith(CJBig2_ArithDecoder* pArithDecoder,
+                                            JBig2ArithCtx* gbContext,
+                                            PauseIndicatorIface* pPause);
 
-  CJBig2_Image* decode_MMR(CJBig2_BitStream* pStream, IFX_Pause* pPause);
+  std::unique_ptr<CJBig2_Image> DecodeMMR(CJBig2_BitStream* pStream);
 
  public:
   uint32_t HBW;
   uint32_t HBH;
-  FX_BOOL HMMR;
+  bool HMMR;
   uint8_t HTEMPLATE;
   uint32_t HNUMPATS;
-  CJBig2_Image** HPATS;
-  FX_BOOL HDEFPIXEL;
+  const std::vector<std::unique_ptr<CJBig2_Image>>* HPATS;
+  bool HDEFPIXEL;
   JBig2ComposeOp HCOMBOP;
-  FX_BOOL HENABLESKIP;
+  bool HENABLESKIP;
   uint32_t HGW;
   uint32_t HGH;
   int32_t HGX;
@@ -41,6 +44,10 @@ class CJBig2_HTRDProc {
   uint16_t HRY;
   uint8_t HPW;
   uint8_t HPH;
+
+ private:
+  std::unique_ptr<CJBig2_Image> DecodeImage(
+      const std::vector<std::unique_ptr<CJBig2_Image>>& GSPLANES);
 };
 
 #endif  // CORE_FXCODEC_JBIG2_JBIG2_HTRDPROC_H_

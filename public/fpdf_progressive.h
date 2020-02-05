@@ -7,11 +7,12 @@
 #ifndef PUBLIC_FPDF_PROGRESSIVE_H_
 #define PUBLIC_FPDF_PROGRESSIVE_H_
 
+// NOLINTNEXTLINE(build/include)
 #include "fpdfview.h"
 
 // Flags for progressive process status.
-#define FPDF_RENDER_READER 0
-#define FPDF_RENDER_TOBECOUNTINUED 1
+#define FPDF_RENDER_READY 0
+#define FPDF_RENDER_TOBECONTINUED 1
 #define FPDF_RENDER_DONE 2
 #define FPDF_RENDER_FAILED 3
 
@@ -66,22 +67,25 @@ typedef struct _IFSDK_PAUSE {
 //                              2 (rotated 180 degrees), 3 (rotated 90 degrees
 //                              counter-clockwise).
 //          flags       -   0 for normal display, or combination of flags
-//          defined above.
+//                          defined in fpdfview.h. With FPDF_ANNOT flag, it
+//                          renders all annotations that does not require
+//                          user-interaction, which are all annotations except
+//                          widget and popup annotations.
 //          pause       -   The IFSDK_PAUSE interface.A callback mechanism
 //          allowing the page rendering process
 // Return value:
 //          Rendering Status. See flags for progressive process status for the
 //          details.
 //
-DLLEXPORT int STDCALL FPDF_RenderPageBitmap_Start(FPDF_BITMAP bitmap,
-                                                  FPDF_PAGE page,
-                                                  int start_x,
-                                                  int start_y,
-                                                  int size_x,
-                                                  int size_y,
-                                                  int rotate,
-                                                  int flags,
-                                                  IFSDK_PAUSE* pause);
+FPDF_EXPORT int FPDF_CALLCONV FPDF_RenderPageBitmap_Start(FPDF_BITMAP bitmap,
+                                                          FPDF_PAGE page,
+                                                          int start_x,
+                                                          int start_y,
+                                                          int size_x,
+                                                          int size_y,
+                                                          int rotate,
+                                                          int flags,
+                                                          IFSDK_PAUSE* pause);
 
 // Function: FPDF_RenderPage_Continue
 //          Continue rendering a PDF page.
@@ -95,8 +99,8 @@ DLLEXPORT int STDCALL FPDF_RenderPageBitmap_Start(FPDF_BITMAP bitmap,
 // Return value:
 //          The rendering status. See flags for progressive process status for
 //          the details.
-DLLEXPORT int STDCALL FPDF_RenderPage_Continue(FPDF_PAGE page,
-                                               IFSDK_PAUSE* pause);
+FPDF_EXPORT int FPDF_CALLCONV FPDF_RenderPage_Continue(FPDF_PAGE page,
+                                                       IFSDK_PAUSE* pause);
 
 // Function: FPDF_RenderPage_Close
 //          Release the resource allocate during page rendering. Need to be
@@ -107,7 +111,7 @@ DLLEXPORT int STDCALL FPDF_RenderPage_Continue(FPDF_PAGE page,
 //          function.
 // Return value:
 //          NULL
-DLLEXPORT void STDCALL FPDF_RenderPage_Close(FPDF_PAGE page);
+FPDF_EXPORT void FPDF_CALLCONV FPDF_RenderPage_Close(FPDF_PAGE page);
 
 #ifdef __cplusplus
 }

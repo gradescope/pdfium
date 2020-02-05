@@ -4,10 +4,10 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fpdfdoc/include/cpdf_linklist.h"
+#include "core/fpdfdoc/cpdf_linklist.h"
 
-#include "core/fpdfapi/fpdf_page/include/cpdf_page.h"
-#include "core/fpdfapi/fpdf_parser/include/cpdf_array.h"
+#include "core/fpdfapi/page/cpdf_page.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
 
 CPDF_LinkList::CPDF_LinkList() {}
 
@@ -15,7 +15,7 @@ CPDF_LinkList::~CPDF_LinkList() {}
 
 const std::vector<CPDF_Dictionary*>* CPDF_LinkList::GetPageLinks(
     CPDF_Page* pPage) {
-  uint32_t objnum = pPage->m_pFormDict->GetObjNum();
+  uint32_t objnum = pPage->GetDict()->GetObjNum();
   if (objnum == 0)
     return nullptr;
 
@@ -30,8 +30,7 @@ const std::vector<CPDF_Dictionary*>* CPDF_LinkList::GetPageLinks(
 }
 
 CPDF_Link CPDF_LinkList::GetLinkAtPoint(CPDF_Page* pPage,
-                                        FX_FLOAT pdf_x,
-                                        FX_FLOAT pdf_y,
+                                        const CFX_PointF& point,
                                         int* z_order) {
   const std::vector<CPDF_Dictionary*>* pPageLinkList = GetPageLinks(pPage);
   if (!pPageLinkList)
@@ -44,8 +43,7 @@ CPDF_Link CPDF_LinkList::GetLinkAtPoint(CPDF_Page* pPage,
       continue;
 
     CPDF_Link link(pAnnot);
-    CFX_FloatRect rect = link.GetRect();
-    if (!rect.Contains(pdf_x, pdf_y))
+    if (!link.GetRect().Contains(point))
       continue;
 
     if (z_order)
@@ -57,13 +55,13 @@ CPDF_Link CPDF_LinkList::GetLinkAtPoint(CPDF_Page* pPage,
 
 void CPDF_LinkList::LoadPageLinks(CPDF_Page* pPage,
                                   std::vector<CPDF_Dictionary*>* pList) {
-  CPDF_Array* pAnnotList = pPage->m_pFormDict->GetArrayBy("Annots");
+  CPDF_Array* pAnnotList = pPage->GetDict()->GetArrayFor("Annots");
   if (!pAnnotList)
     return;
 
   for (size_t i = 0; i < pAnnotList->GetCount(); ++i) {
     CPDF_Dictionary* pAnnot = pAnnotList->GetDictAt(i);
-    bool add_link = (pAnnot && pAnnot->GetStringBy("Subtype") == "Link");
+    bool add_link = (pAnnot && pAnnot->GetStringFor("Subtype") == "Link");
     // Add non-links as nullptrs to preserve z-order.
     pList->push_back(add_link ? pAnnot : nullptr);
   }

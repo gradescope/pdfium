@@ -7,57 +7,55 @@
 #ifndef CORE_FXCODEC_CODEC_CCODEC_GIFMODULE_H_
 #define CORE_FXCODEC_CODEC_CCODEC_GIFMODULE_H_
 
-#include "core/fxcrt/include/fx_system.h"
+#include <memory>
+#include <utility>
 
-struct FXGIF_Context;
+#include "core/fxcodec/gif/cfx_gif.h"
+#include "core/fxcrt/fx_coordinates.h"
+#include "core/fxcrt/fx_system.h"
+#include "third_party/base/span.h"
+
+class CFX_DIBAttribute;
 
 class CCodec_GifModule {
  public:
-  CCodec_GifModule() { FXSYS_memset(m_szLastError, 0, sizeof(m_szLastError)); }
+  class Context {
+   public:
+    virtual ~Context() {}
+  };
 
-  FXGIF_Context* Start(void* pModule);
-  void Finish(FXGIF_Context* pContext);
+  class Delegate {
+   public:
+    virtual void GifRecordCurrentPosition(uint32_t& cur_pos) = 0;
+    virtual bool GifInputRecordPositionBuf(uint32_t rcd_pos,
+                                           const FX_RECT& img_rc,
+                                           int32_t pal_num,
+                                           CFX_GifPalette* pal_ptr,
+                                           int32_t delay_time,
+                                           bool user_input,
+                                           int32_t trans_index,
+                                           int32_t disposal_method,
+                                           bool interlace) = 0;
+    virtual void GifReadScanline(int32_t row_num, uint8_t* row_buf) = 0;
+  };
 
-  uint32_t GetAvailInput(FXGIF_Context* pContext,
-                         uint8_t** avail_buf_ptr = nullptr);
-  void Input(FXGIF_Context* pContext,
-             const uint8_t* src_buf,
-             uint32_t src_size);
+  CCodec_GifModule();
+  ~CCodec_GifModule();
 
-  int32_t ReadHeader(FXGIF_Context* pContext,
-                     int* width,
-                     int* height,
-                     int* pal_num,
-                     void** pal_pp,
-                     int* bg_index,
-                     CFX_DIBAttribute* pAttribute);
-
-  int32_t LoadFrameInfo(FXGIF_Context* pContext, int* frame_num);
-
-  int32_t LoadFrame(FXGIF_Context* pContext,
-                    int frame_num,
-                    CFX_DIBAttribute* pAttribute);
-
-  void (*RecordCurrentPositionCallback)(void* pModule, uint32_t& cur_pos);
-  uint8_t* (*AskLocalPaletteBufCallback)(void* pModule,
-                                         int32_t frame_num,
-                                         int32_t pal_size);
-  FX_BOOL (*InputRecordPositionBufCallback)(void* pModule,
-                                            uint32_t rcd_pos,
-                                            const FX_RECT& img_rc,
-                                            int32_t pal_num,
-                                            void* pal_ptr,
-                                            int32_t delay_time,
-                                            FX_BOOL user_input,
-                                            int32_t trans_index,
-                                            int32_t disposal_method,
-                                            FX_BOOL interlace);
-  void (*ReadScanlineCallback)(void* pModule,
-                               int32_t row_num,
-                               uint8_t* row_buf);
-
- protected:
-  FX_CHAR m_szLastError[256];
+  std::unique_ptr<Context> Start(Delegate* pDelegate);
+  uint32_t GetAvailInput(Context* context) const;
+  void Input(Context* context, pdfium::span<uint8_t> src_buf);
+  CFX_GifDecodeStatus ReadHeader(Context* context,
+                                 int* width,
+                                 int* height,
+                                 int* pal_num,
+                                 CFX_GifPalette** pal_pp,
+                                 int* bg_index,
+                                 CFX_DIBAttribute* pAttribute);
+  std::pair<CFX_GifDecodeStatus, size_t> LoadFrameInfo(Context* context);
+  CFX_GifDecodeStatus LoadFrame(Context* context,
+                                size_t frame_num,
+                                CFX_DIBAttribute* pAttribute);
 };
 
 #endif  // CORE_FXCODEC_CODEC_CCODEC_GIFMODULE_H_

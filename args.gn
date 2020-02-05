@@ -10,3 +10,4 @@ use_sysroot = false               # Currently must be false on Linux.
 pdf_enable_xfa = false            # Set false to remove XFA support (implies JS support).
 pdf_enable_v8 = false             # Set false to remove Javascript support.
 is_clang = false                  # Compile with gcc
+is_desktop_linux = false

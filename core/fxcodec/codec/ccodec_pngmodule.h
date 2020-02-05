@@ -7,36 +7,40 @@
 #ifndef CORE_FXCODEC_CODEC_CCODEC_PNGMODULE_H_
 #define CORE_FXCODEC_CODEC_CCODEC_PNGMODULE_H_
 
-#include "core/fxcrt/include/fx_system.h"
+#include <memory>
+
+#include "core/fxcrt/fx_system.h"
 
 class CFX_DIBAttribute;
-struct FXPNG_Context;
-
-#define PNG_ERROR_SIZE 256
 
 class CCodec_PngModule {
  public:
-  CCodec_PngModule() { FXSYS_memset(m_szLastError, 0, sizeof(m_szLastError)); }
+  class Context {
+   public:
+    virtual ~Context() {}
+  };
 
-  FXPNG_Context* Start(void* pModule);
-  void Finish(FXPNG_Context* pContext);
-  FX_BOOL Input(FXPNG_Context* pContext,
-                const uint8_t* src_buf,
-                uint32_t src_size,
-                CFX_DIBAttribute* pAttribute);
+  class Delegate {
+   public:
+    virtual bool PngReadHeader(int width,
+                               int height,
+                               int bpc,
+                               int pass,
+                               int* color_type,
+                               double* gamma) = 0;
 
-  FX_BOOL (*ReadHeaderCallback)(void* pModule,
-                                int width,
-                                int height,
-                                int bpc,
-                                int pass,
-                                int* color_type,
-                                double* gamma);
-  FX_BOOL (*AskScanlineBufCallback)(void* pModule, int line, uint8_t*& src_buf);
-  void (*FillScanlineBufCompletedCallback)(void* pModule, int pass, int line);
+    // Returns true on success. |pSrcBuf| will be set if this succeeds.
+    // |pSrcBuf| does not take ownership of the buffer.
+    virtual bool PngAskScanlineBuf(int line, uint8_t** pSrcBuf) = 0;
 
- protected:
-  FX_CHAR m_szLastError[PNG_ERROR_SIZE];
+    virtual void PngFillScanlineBufCompleted(int pass, int line) = 0;
+  };
+
+  std::unique_ptr<Context> Start(Delegate* pDelegate);
+  bool Input(Context* pContext,
+             const uint8_t* src_buf,
+             uint32_t src_size,
+             CFX_DIBAttribute* pAttribute);
 };
 
 #endif  // CORE_FXCODEC_CODEC_CCODEC_PNGMODULE_H_

@@ -1,6 +1,6 @@
 Name: libpng
 URL: http://libpng.org/
-Version: 1.6.22
+Version: 1.6.34
 Security Critical: yes
 License: libpng license
 License Android Compatible: yes
@@ -10,8 +10,8 @@ PNG library.
 
 Local Modifications:
 
-Local changes in Chromium's copy of libpng as of https://crrev.com/404379 - see
-README.chromium.
+Local changes in Chromium's copy of libpng as of
+e87a02987101e2dbe319a4aba6b52470f7624b4a - see README.chromium.
 
 pnglibconf.h: a copy of libpng's scripts/pnglibconf.h.prebuilt.
 pngprefix.h: manually-created redefinitions to avoid conflicts with Chromium.

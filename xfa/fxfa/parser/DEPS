@@ -1,3 +1,5 @@
 include_rules = [
-  '+core/fxcodec/include',
+  # xfa/fwl should be standalone. https://crbug.com/pdfium/507
+  '-xfa/fwl',
 ]
+

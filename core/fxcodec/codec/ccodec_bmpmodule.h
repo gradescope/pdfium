@@ -7,40 +7,44 @@
 #ifndef CORE_FXCODEC_CODEC_CCODEC_BMPMODULE_H_
 #define CORE_FXCODEC_CODEC_CCODEC_BMPMODULE_H_
 
-#include "core/fxcrt/include/fx_system.h"
+#include <memory>
+#include <vector>
 
-struct FXBMP_Context;
+#include "core/fxcrt/fx_system.h"
+#include "core/fxcrt/unowned_ptr.h"
+#include "third_party/base/span.h"
+
 class CFX_DIBAttribute;
 
 class CCodec_BmpModule {
  public:
-  CCodec_BmpModule() { FXSYS_memset(m_szLastError, 0, sizeof(m_szLastError)); }
+  class Context {
+   public:
+    virtual ~Context() {}
+  };
 
-  FXBMP_Context* Start(void* pModule);
-  void Finish(FXBMP_Context* pContext);
+  class Delegate {
+   public:
+    virtual bool BmpInputImagePositionBuf(uint32_t rcd_pos) = 0;
+    virtual void BmpReadScanline(uint32_t row_num,
+                                 const std::vector<uint8_t>& row_buf) = 0;
+  };
 
-  uint32_t GetAvailInput(FXBMP_Context* pContext, uint8_t** avail_buf_ptr);
-  void Input(FXBMP_Context* pContext,
-             const uint8_t* src_buf,
-             uint32_t src_size);
+  CCodec_BmpModule();
+  ~CCodec_BmpModule();
 
-  int32_t ReadHeader(FXBMP_Context* pContext,
+  std::unique_ptr<Context> Start(Delegate* pDelegate);
+  FX_FILESIZE GetAvailInput(Context* pContext) const;
+  void Input(Context* pContext, pdfium::span<uint8_t> src_buf);
+  int32_t ReadHeader(Context* pContext,
                      int32_t* width,
                      int32_t* height,
-                     FX_BOOL* tb_flag,
+                     bool* tb_flag,
                      int32_t* components,
                      int32_t* pal_num,
-                     uint32_t** pal_pp,
+                     std::vector<uint32_t>* palette,
                      CFX_DIBAttribute* pAttribute);
-  int32_t LoadImage(FXBMP_Context* pContext);
-
-  FX_BOOL (*InputImagePositionBufCallback)(void* pModule, uint32_t rcd_pos);
-  void (*ReadScanlineCallback)(void* pModule,
-                               int32_t row_num,
-                               uint8_t* row_buf);
-
- protected:
-  FX_CHAR m_szLastError[256];
+  int32_t LoadImage(Context* pContext);
 };
 
 #endif  // CORE_FXCODEC_CODEC_CCODEC_BMPMODULE_H_

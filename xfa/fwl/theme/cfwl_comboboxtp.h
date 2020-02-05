@@ -9,18 +9,15 @@
 
 #include "xfa/fwl/theme/cfwl_widgettp.h"
 
-class CFWL_ComboBoxTP : public CFWL_WidgetTP {
+class CFWL_ComboBoxTP final : public CFWL_WidgetTP {
  public:
   CFWL_ComboBoxTP();
   ~CFWL_ComboBoxTP() override;
 
   // CFWL_WidgetTP
-  bool IsValidWidget(IFWL_Widget* pWidget) override;
-  FX_BOOL DrawBackground(CFWL_ThemeBackground* pParams) override;
-  void* GetCapacity(CFWL_ThemePart* pThemePart,
-                    CFWL_WidgetCapacity dwCapacity) override;
+  void DrawBackground(CFWL_ThemeBackground* pParams) override;
 
- protected:
+ private:
   void DrawDropDownButton(CFWL_ThemeBackground* pParams,
                           uint32_t dwStates,
                           CFX_Matrix* pMatrix);

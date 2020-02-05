@@ -35,8 +35,8 @@
 #include "agg_clip_liang_barsky.h"
 #include "agg_math.h"
 #include "agg_render_scanlines.h"
-#include "core/fxcrt/include/fx_coordinates.h"
-#include "core/fxcrt/include/fx_memory.h"
+#include "core/fxcrt/fx_coordinates.h"
+#include "core/fxcrt/fx_memory.h"
 
 namespace agg
 {
@@ -45,7 +45,7 @@ enum poly_base_scale_e {
     poly_base_size  = 1 << poly_base_shift,
     poly_base_mask  = poly_base_size - 1
 };
-inline int poly_coord(FX_FLOAT c)
+inline int poly_coord(float c)
 {
     return int(c * poly_base_size);
 }
@@ -219,14 +219,14 @@ public:
         m_outline.reset();
         m_status = status_initial;
     }
-    void clip_box(FX_FLOAT x1, FX_FLOAT y1, FX_FLOAT x2, FX_FLOAT y2)
+    void clip_box(float x1, float y1, float x2, float y2)
     {
         m_clip_box = rect(poly_coord(x1), poly_coord(y1),
                           poly_coord(x2), poly_coord(y2));
         m_clip_box.normalize();
         m_clipping = true;
     }
-    void add_vertex(FX_FLOAT x, FX_FLOAT y, unsigned cmd)
+    void add_vertex(float x, float y, unsigned cmd)
     {
         if(is_close(cmd)) {
             close_polygon();
@@ -349,14 +349,14 @@ public:
                     cover += cur_cell->cover;
                 }
                 if(area) {
-                    alpha = calculate_alpha((cover << (poly_base_shift + 1)) - area, no_smooth);
+                    alpha = calculate_alpha(calculate_area(cover, poly_base_shift + 1) - area, no_smooth);
                     if(alpha) {
                         sl.add_cell(x, alpha);
                     }
                     x++;
                 }
                 if(num_cells && cur_cell->x > x) {
-                    alpha = calculate_alpha(cover << (poly_base_shift + 1), no_smooth);
+                    alpha = calculate_alpha(calculate_area(cover, poly_base_shift + 1), no_smooth);
                     if(alpha) {
                         sl.add_span(x, cur_cell->x - x, alpha);
                     }
@@ -374,8 +374,8 @@ public:
     template<class VertexSource>
     void add_path(VertexSource& vs, unsigned path_id = 0)
     {
-        FX_FLOAT x;
-        FX_FLOAT y;
+        float x;
+        float y;
         unsigned cmd;
         vs.rewind(path_id);
         while(!is_stop(cmd = vs.vertex(&x, &y))) {
@@ -385,15 +385,17 @@ public:
     template<class VertexSource>
     void add_path_transformed(VertexSource& vs, const CFX_Matrix* pMatrix, unsigned path_id = 0)
     {
-        FX_FLOAT x;
-        FX_FLOAT y;
+        float x;
+        float y;
         unsigned cmd;
         vs.rewind(path_id);
         while(!is_stop(cmd = vs.vertex(&x, &y))) {
-            if (pMatrix) {
-                pMatrix->Transform(x, y);
-            }
-            add_vertex(x, y, cmd);
+          if (pMatrix) {
+            CFX_PointF ret = pMatrix->Transform(CFX_PointF(x, y));
+            x = ret.x;
+            y = ret.y;
+          }
+          add_vertex(x, y, cmd);
         }
     }
 private:
@@ -455,6 +457,11 @@ private:
         m_prev_flags = flags;
         m_prev_x = x;
         m_prev_y = y;
+    }
+    static int calculate_area(int cover, int shift) {
+        unsigned int result = cover;
+        result <<= shift;
+        return result;
     }
 private:
     outline_aa     m_outline;

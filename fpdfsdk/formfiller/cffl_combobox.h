@@ -7,8 +7,8 @@
 #ifndef FPDFSDK_FORMFILLER_CFFL_COMBOBOX_H_
 #define FPDFSDK_FORMFILLER_CFFL_COMBOBOX_H_
 
-#include "core/fxcrt/include/fx_string.h"
-#include "fpdfsdk/formfiller/cffl_formfiller.h"
+#include "core/fxcrt/fx_string.h"
+#include "fpdfsdk/formfiller/cffl_textobject.h"
 
 class CBA_FontMap;
 
@@ -16,47 +16,42 @@ struct FFL_ComboBoxState {
   int nIndex;
   int nStart;
   int nEnd;
-  CFX_WideString sValue;
+  WideString sValue;
 };
 
-class CFFL_ComboBox : public CFFL_FormFiller, public IPWL_FocusHandler {
+class CFFL_ComboBox final : public CFFL_TextObject,
+                            public CPWL_Wnd::FocusHandlerIface {
  public:
-  CFFL_ComboBox(CPDFDoc_Environment* pApp, CPDFSDK_Annot* pWidget);
+  CFFL_ComboBox(CPDFSDK_FormFillEnvironment* pApp, CPDFSDK_Widget* pWidget);
   ~CFFL_ComboBox() override;
 
-  // CFFL_FormFiller:
-  PWL_CREATEPARAM GetCreateParam() override;
-  CPWL_Wnd* NewPDFWindow(const PWL_CREATEPARAM& cp,
-                         CPDFSDK_PageView* pPageView) override;
-  FX_BOOL OnChar(CPDFSDK_Annot* pAnnot, FX_UINT nChar, FX_UINT nFlags) override;
-  FX_BOOL IsDataChanged(CPDFSDK_PageView* pPageView) override;
+  // CFFL_TextObject:
+  CPWL_Wnd::CreateParams GetCreateParam() override;
+  CPWL_Wnd* NewPDFWindow(const CPWL_Wnd::CreateParams& cp) override;
+  bool OnChar(CPDFSDK_Annot* pAnnot, uint32_t nChar, uint32_t nFlags) override;
+  bool IsDataChanged(CPDFSDK_PageView* pPageView) override;
   void SaveData(CPDFSDK_PageView* pPageView) override;
   void GetActionData(CPDFSDK_PageView* pPageView,
                      CPDF_AAction::AActionType type,
-                     PDFSDK_FieldAction& fa) override;
+                     CPDFSDK_FieldAction& fa) override;
   void SetActionData(CPDFSDK_PageView* pPageView,
                      CPDF_AAction::AActionType type,
-                     const PDFSDK_FieldAction& fa) override;
-  FX_BOOL IsActionDataChanged(CPDF_AAction::AActionType type,
-                              const PDFSDK_FieldAction& faOld,
-                              const PDFSDK_FieldAction& faNew) override;
+                     const CPDFSDK_FieldAction& fa) override;
+  bool IsActionDataChanged(CPDF_AAction::AActionType type,
+                           const CPDFSDK_FieldAction& faOld,
+                           const CPDFSDK_FieldAction& faNew) override;
   void SaveState(CPDFSDK_PageView* pPageView) override;
   void RestoreState(CPDFSDK_PageView* pPageView) override;
-  CPWL_Wnd* ResetPDFWindow(CPDFSDK_PageView* pPageView,
-                           FX_BOOL bRestoreValue) override;
-
-  // IPWL_FocusHandler:
-  void OnSetFocus(CPWL_Wnd* pWnd) override;
-
 #ifdef PDF_ENABLE_XFA
-  // CFFL_FormFiller:
-  FX_BOOL IsFieldFull(CPDFSDK_PageView* pPageView) override;
-#endif  // PDF_ENABLE_XFA
+  bool IsFieldFull(CPDFSDK_PageView* pPageView) override;
+#endif
+
+  // CPWL_Wnd::FocusHandlerIface:
+  void OnSetFocus(CPWL_Edit* pEdit) override;
 
  private:
-  CFX_WideString GetSelectExportText();
+  WideString GetSelectExportText();
 
-  CBA_FontMap* m_pFontMap;
   FFL_ComboBoxState m_State;
 };
 

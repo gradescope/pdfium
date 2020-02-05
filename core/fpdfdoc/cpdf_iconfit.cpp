@@ -4,17 +4,23 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fpdfdoc/include/cpdf_iconfit.h"
+#include "core/fpdfdoc/cpdf_iconfit.h"
 
-#include "core/fpdfapi/fpdf_parser/include/cpdf_array.h"
-#include "core/fpdfapi/fpdf_parser/include/cpdf_dictionary.h"
-#include "core/fxcrt/include/fx_string.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
+#include "core/fpdfapi/parser/cpdf_dictionary.h"
+#include "core/fxcrt/fx_string.h"
+
+CPDF_IconFit::CPDF_IconFit(const CPDF_Dictionary* pDict) : m_pDict(pDict) {}
+
+CPDF_IconFit::CPDF_IconFit(const CPDF_IconFit& that) = default;
+
+CPDF_IconFit::~CPDF_IconFit() {}
 
 CPDF_IconFit::ScaleMethod CPDF_IconFit::GetScaleMethod() {
   if (!m_pDict)
     return Always;
 
-  CFX_ByteString csSW = m_pDict->GetStringBy("SW", "A");
+  ByteString csSW = m_pDict->GetStringFor("SW", "A");
   if (csSW == "B")
     return Bigger;
   if (csSW == "S")
@@ -24,16 +30,16 @@ CPDF_IconFit::ScaleMethod CPDF_IconFit::GetScaleMethod() {
   return Always;
 }
 
-FX_BOOL CPDF_IconFit::IsProportionalScale() {
-  return m_pDict ? m_pDict->GetStringBy("S", "P") != "A" : TRUE;
+bool CPDF_IconFit::IsProportionalScale() {
+  return m_pDict ? m_pDict->GetStringFor("S", "P") != "A" : true;
 }
 
-void CPDF_IconFit::GetIconPosition(FX_FLOAT& fLeft, FX_FLOAT& fBottom) {
+void CPDF_IconFit::GetIconPosition(float& fLeft, float& fBottom) {
   fLeft = fBottom = 0.5;
   if (!m_pDict)
     return;
 
-  CPDF_Array* pA = m_pDict->GetArrayBy("A");
+  const CPDF_Array* pA = m_pDict->GetArrayFor("A");
   if (pA) {
     uint32_t dwCount = pA->GetCount();
     if (dwCount > 0)
@@ -44,5 +50,5 @@ void CPDF_IconFit::GetIconPosition(FX_FLOAT& fLeft, FX_FLOAT& fBottom) {
 }
 
 bool CPDF_IconFit::GetFittingBounds() {
-  return m_pDict ? m_pDict->GetBooleanBy("FB") : false;
+  return m_pDict ? m_pDict->GetBooleanFor("FB") : false;
 }

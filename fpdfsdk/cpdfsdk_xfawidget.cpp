@@ -4,10 +4,10 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "fpdfsdk/include/cpdfsdk_xfawidget.h"
+#include "fpdfsdk/cpdfsdk_xfawidget.h"
 
-#include "fpdfsdk/include/ipdfsdk_annothandler.h"
-#include "xfa/fxfa/include/xfa_ffwidget.h"
+#include "fpdfsdk/ipdfsdk_annothandler.h"
+#include "xfa/fxfa/cxfa_ffwidget.h"
 
 CPDFSDK_XFAWidget::CPDFSDK_XFAWidget(CXFA_FFWidget* pAnnot,
                                      CPDFSDK_PageView* pPageView,
@@ -16,12 +16,14 @@ CPDFSDK_XFAWidget::CPDFSDK_XFAWidget(CXFA_FFWidget* pAnnot,
       m_pInterForm(pInterForm),
       m_hXFAWidget(pAnnot) {}
 
-FX_BOOL CPDFSDK_XFAWidget::IsXFAField() {
-  return TRUE;
+CPDFSDK_XFAWidget::~CPDFSDK_XFAWidget() {}
+
+bool CPDFSDK_XFAWidget::IsXFAField() {
+  return true;
 }
 
 CXFA_FFWidget* CPDFSDK_XFAWidget::GetXFAWidget() const {
-  return m_hXFAWidget;
+  return m_hXFAWidget.Get();
 }
 
 CPDF_Annot::Subtype CPDFSDK_XFAWidget::GetAnnotSubtype() const {
@@ -29,8 +31,7 @@ CPDF_Annot::Subtype CPDFSDK_XFAWidget::GetAnnotSubtype() const {
 }
 
 CFX_FloatRect CPDFSDK_XFAWidget::GetRect() const {
-  CFX_RectF rcBBox;
-  GetXFAWidget()->GetRect(rcBBox);
+  CFX_RectF rcBBox = GetXFAWidget()->GetRect(false);
   return CFX_FloatRect(rcBBox.left, rcBBox.top, rcBBox.left + rcBBox.width,
                        rcBBox.top + rcBBox.height);
 }

@@ -4,23 +4,31 @@
 
 // Original code copyright 2014 Foxit Software Inc. http://www.foxitsoftware.com
 
-#include "core/fpdfdoc/include/cpdf_link.h"
+#include "core/fpdfdoc/cpdf_link.h"
 
-#include "core/fpdfapi/fpdf_parser/include/cpdf_array.h"
-#include "core/fpdfdoc/include/cpdf_nametree.h"
+#include "core/fpdfapi/parser/cpdf_array.h"
+#include "core/fpdfdoc/cpdf_nametree.h"
+
+CPDF_Link::CPDF_Link() {}
+
+CPDF_Link::CPDF_Link(CPDF_Dictionary* pDict) : m_pDict(pDict) {}
+
+CPDF_Link::CPDF_Link(const CPDF_Link& that) = default;
+
+CPDF_Link::~CPDF_Link() {}
 
 CFX_FloatRect CPDF_Link::GetRect() {
-  return m_pDict->GetRectBy("Rect");
+  return m_pDict->GetRectFor("Rect");
 }
 
 CPDF_Dest CPDF_Link::GetDest(CPDF_Document* pDoc) {
-  CPDF_Object* pDest = m_pDict->GetDirectObjectBy("Dest");
+  CPDF_Object* pDest = m_pDict->GetDirectObjectFor("Dest");
   if (!pDest)
     return CPDF_Dest();
 
   if (pDest->IsString() || pDest->IsName()) {
     CPDF_NameTree name_tree(pDoc, "Dests");
-    return CPDF_Dest(name_tree.LookupNamedDest(pDoc, pDest->GetString()));
+    return CPDF_Dest(name_tree.LookupNamedDest(pDoc, pDest->GetUnicodeText()));
   }
   if (CPDF_Array* pArray = pDest->AsArray())
     return CPDF_Dest(pArray);
@@ -28,5 +36,5 @@ CPDF_Dest CPDF_Link::GetDest(CPDF_Document* pDoc) {
 }
 
 CPDF_Action CPDF_Link::GetAction() {
-  return CPDF_Action(m_pDict->GetDictBy("A"));
+  return CPDF_Action(m_pDict->GetDictFor("A"));
 }

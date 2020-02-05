@@ -3,18 +3,18 @@
 # found in the LICENSE file.
 
 import("//build/config/sanitizers/sanitizers.gni")
-import("//build_overrides/v8.gni")
 import("../pdfium.gni")
 
 group("samples") {
   testonly = true
   deps = [
-    ":pdfium_diff",
     ":pdfium_test",
   ]
 }
 
 config("pdfium_samples_config") {
+  cflags = []
+  ldflags = []
   defines = [
     "PNG_PREFIX",
     "PNG_USE_READ_MACROS",
@@ -29,29 +29,34 @@ config("pdfium_samples_config") {
   if (pdf_use_skia) {
     defines += [ "PDF_ENABLE_SKIA" ]
   }
+  if (is_asan) {
+    defines += [ "PDF_ENABLE_ASAN" ]
+  }
+
+  if (enable_callgrind) {
+    defines += [ "ENABLE_CALLGRIND" ]
+  }
 }
 
 executable("pdfium_test") {
   testonly = true
   sources = [
-    "image_diff_png.cc",
-    "image_diff_png.h",
     "pdfium_test.cc",
+    "pdfium_test_dump_helper.cc",
+    "pdfium_test_dump_helper.h",
+    "pdfium_test_event_helper.cc",
+    "pdfium_test_event_helper.h",
+    "pdfium_test_write_helper.cc",
+    "pdfium_test_write_helper.h",
   ]
   deps = [
+    "../:image_diff",
     "../:pdfium",
     "../:test_support",
-    "//build/config/sanitizers:deps",
     "//build/win:default_exe_manifest",
-
-    # Regardless of whether the library ships against system freetype,
-    # always link this binary against the bundled one for consistency
-    # of results across platforms.
-    "../third_party:fx_freetype",
   ]
-  if (!pdf_enable_xfa) {
-    deps += [ "../third_party:fx_lpng" ]
-  }
+  configs += [ ":pdfium_samples_config" ]
+
   if (pdf_enable_v8) {
     deps += [ "//v8:v8_libplatform" ]
     include_dirs = [
@@ -60,32 +65,9 @@ executable("pdfium_test") {
     ]
     configs += [ "//v8:external_startup_data" ]
   }
-  if (pdf_use_skia) {
+  if (pdf_use_skia || pdf_use_skia_paths) {
     deps += [ "//skia" ]
   }
-  configs += [ ":pdfium_samples_config" ]
-}
-
-executable("pdfium_diff") {
-  testonly = true
-  sources = [
-    "image_diff.cc",
-    "image_diff_png.cc",
-    "image_diff_png.h",
-  ]
-  deps = [
-    "../:pdfium",
-    "//build/config/sanitizers:deps",
-    "//build/win:default_exe_manifest",
-  ]
-  if (!pdf_enable_xfa) {
-    deps += [ "../third_party:fx_lpng" ]
-  }
-  configs -= [ "//build/config/compiler:chromium_code" ]
-  configs += [
-    ":pdfium_samples_config",
-    "//build/config/compiler:no_chromium_code",
-  ]
 }
 
 version_file = "$target_gen_dir/version.h"

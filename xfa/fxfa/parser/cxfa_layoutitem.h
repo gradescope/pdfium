@@ -7,50 +7,44 @@
 #ifndef XFA_FXFA_PARSER_CXFA_LAYOUTITEM_H_
 #define XFA_FXFA_PARSER_CXFA_LAYOUTITEM_H_
 
+#include "core/fxcrt/unowned_ptr.h"
 #include "xfa/fxfa/parser/cxfa_document.h"
 
 class CXFA_ContainerLayoutItem;
 class CXFA_ContentLayoutItem;
 class CXFA_LayoutProcessor;
 
-void XFA_ReleaseLayoutItem(CXFA_LayoutItem* pLayoutItem);
-
 class CXFA_LayoutItem {
  public:
   virtual ~CXFA_LayoutItem();
 
-  FX_BOOL IsContainerLayoutItem() const { return !m_bIsContentLayoutItem; }
-  FX_BOOL IsContentLayoutItem() const { return m_bIsContentLayoutItem; }
+  bool IsContainerLayoutItem() const { return m_ItemType == kContainerItem; }
+  bool IsContentLayoutItem() const { return m_ItemType == kContentItem; }
   CXFA_ContainerLayoutItem* AsContainerLayoutItem();
   CXFA_ContentLayoutItem* AsContentLayoutItem();
 
   CXFA_ContainerLayoutItem* GetPage() const;
-  CXFA_Node* GetFormNode() const;
-  void GetRect(CFX_RectF& rtLayout, FX_BOOL bRelative = FALSE) const;
-  int32_t GetIndex() const;
-  int32_t GetCount() const;
-  CXFA_LayoutItem* GetParent() const;
-  const CXFA_LayoutItem* GetFirst() const;
-  CXFA_LayoutItem* GetFirst();
-  const CXFA_LayoutItem* GetLast() const;
-  CXFA_LayoutItem* GetLast();
-  CXFA_LayoutItem* GetPrev() const;
-  CXFA_LayoutItem* GetNext() const;
+  CXFA_LayoutItem* GetParent() const { return m_pParent; }
+  CXFA_Node* GetFormNode() const { return m_pFormNode.Get(); }
+  void SetFormNode(CXFA_Node* pNode) { m_pFormNode = pNode; }
 
   void AddChild(CXFA_LayoutItem* pChildItem);
   void AddHeadChild(CXFA_LayoutItem* pChildItem);
   void RemoveChild(CXFA_LayoutItem* pChildItem);
   void InsertChild(CXFA_LayoutItem* pBeforeItem, CXFA_LayoutItem* pChildItem);
 
-  CXFA_Node* m_pFormNode;
-  CXFA_LayoutItem* m_pParent;
-  CXFA_LayoutItem* m_pNextSibling;
-  CXFA_LayoutItem* m_pFirstChild;
+  CXFA_LayoutItem* m_pParent = nullptr;       // Raw, intra-tree pointer.
+  CXFA_LayoutItem* m_pNextSibling = nullptr;  // Raw, intra-tree pointer.
+  CXFA_LayoutItem* m_pFirstChild = nullptr;   // Raw, intra-tree pointer.
 
  protected:
-  CXFA_LayoutItem(CXFA_Node* pNode, FX_BOOL bIsContentLayoutItem);
+  enum ItemType { kContainerItem, kContentItem };
+  CXFA_LayoutItem(CXFA_Node* pNode, ItemType type);
 
-  FX_BOOL m_bIsContentLayoutItem;
+  const ItemType m_ItemType;
+  UnownedPtr<CXFA_Node> m_pFormNode;
 };
+
+void XFA_ReleaseLayoutItem(CXFA_LayoutItem* pLayoutItem);
 
 #endif  // XFA_FXFA_PARSER_CXFA_LAYOUTITEM_H_

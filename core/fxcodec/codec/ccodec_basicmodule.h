@@ -7,18 +7,29 @@
 #ifndef CORE_FXCODEC_CODEC_CCODEC_BASICMODULE_H_
 #define CORE_FXCODEC_CODEC_CCODEC_BASICMODULE_H_
 
-#include "core/fxcrt/include/fx_system.h"
+#include <memory>
+
+#include "core/fxcrt/fx_system.h"
+#include "third_party/base/span.h"
 
 class CCodec_ScanlineDecoder;
 
 class CCodec_BasicModule {
  public:
-  CCodec_ScanlineDecoder* CreateRunLengthDecoder(const uint8_t* src_buf,
-                                                 uint32_t src_size,
-                                                 int width,
-                                                 int height,
-                                                 int nComps,
-                                                 int bpc);
+  std::unique_ptr<CCodec_ScanlineDecoder> CreateRunLengthDecoder(
+      pdfium::span<const uint8_t> src_buf,
+      int width,
+      int height,
+      int nComps,
+      int bpc);
+
+  bool RunLengthEncode(pdfium::span<const uint8_t> src_buf,
+                       uint8_t** dest_buf,
+                       uint32_t* dest_size);
+
+  bool A85Encode(pdfium::span<const uint8_t> src_buf,
+                 uint8_t** dest_buf,
+                 uint32_t* dest_size);
 };
 
 #endif  // CORE_FXCODEC_CODEC_CCODEC_BASICMODULE_H_

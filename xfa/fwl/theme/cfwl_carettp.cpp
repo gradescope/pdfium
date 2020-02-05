@@ -6,51 +6,46 @@
 
 #include "xfa/fwl/theme/cfwl_carettp.h"
 
-#include "xfa/fwl/basewidget/ifwl_caret.h"
-#include "xfa/fwl/core/cfwl_themebackground.h"
-#include "xfa/fwl/core/ifwl_widget.h"
-#include "xfa/fxgraphics/cfx_color.h"
-#include "xfa/fxgraphics/cfx_path.h"
+#include "xfa/fwl/cfwl_caret.h"
+#include "xfa/fwl/cfwl_themebackground.h"
+#include "xfa/fwl/cfwl_widget.h"
+#include "xfa/fxgraphics/cxfa_gecolor.h"
+#include "xfa/fxgraphics/cxfa_gepath.h"
 
 CFWL_CaretTP::CFWL_CaretTP() {}
 CFWL_CaretTP::~CFWL_CaretTP() {}
 
-bool CFWL_CaretTP::IsValidWidget(IFWL_Widget* pWidget) {
-  return pWidget && pWidget->GetClassID() == FWL_Type::Caret;
-}
-
-FX_BOOL CFWL_CaretTP::DrawBackground(CFWL_ThemeBackground* pParams) {
+void CFWL_CaretTP::DrawBackground(CFWL_ThemeBackground* pParams) {
   if (!pParams)
-    return FALSE;
+    return;
+
   switch (pParams->m_iPart) {
     case CFWL_Part::Background: {
-      if (!(pParams->m_dwStates & CFWL_PartState_HightLight)) {
-        return TRUE;
-      }
-      DrawCaretBK(pParams->m_pGraphics, pParams->m_dwStates,
-                  &(pParams->m_rtPart), (CFX_Color*)pParams->m_pData,
-                  &(pParams->m_matrix));
+      if (!(pParams->m_dwStates & CFWL_PartState_HightLight))
+        return;
+
+      DrawCaretBK(
+          pParams->m_pGraphics.Get(), pParams->m_dwStates, &pParams->m_rtPart,
+          static_cast<CXFA_GEColor*>(pParams->m_pData), &pParams->m_matrix);
       break;
     }
     default:
       break;
   }
-  return TRUE;
 }
-void CFWL_CaretTP::DrawCaretBK(CFX_Graphics* pGraphics,
+
+void CFWL_CaretTP::DrawCaretBK(CXFA_Graphics* pGraphics,
                                uint32_t dwStates,
                                const CFX_RectF* pRect,
-                               CFX_Color* crFill,
+                               CXFA_GEColor* crFill,
                                CFX_Matrix* pMatrix) {
-  CFX_Path path;
-  path.Create();
+  CXFA_GEPath path;
   CFX_RectF rect = *pRect;
   path.AddRectangle(rect.left, rect.top, rect.width, rect.height);
   if (crFill) {
-    pGraphics->SetFillColor(crFill);
+    pGraphics->SetFillColor(*crFill);
   } else {
-    CFX_Color crFilltemp(ArgbEncode(255, 0, 0, 0));
-    pGraphics->SetFillColor(&crFilltemp);
+    pGraphics->SetFillColor(CXFA_GEColor(ArgbEncode(255, 0, 0, 0)));
   }
   pGraphics->FillPath(&path, FXFILL_WINDING, pMatrix);
 }

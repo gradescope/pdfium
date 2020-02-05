@@ -7,12 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <string>
-
+#include "core/fdrm/crypto/fx_crypt.h"
+#include "core/fxcrt/fx_memory.h"
+#include "core/fxcrt/fx_string.h"
 #include "testing/utils/path_service.h"
 
 #ifdef PDF_ENABLE_V8
 #include "v8/include/libplatform/libplatform.h"
+#include "v8/include/v8.h"
 #endif
 
 namespace {
@@ -58,17 +60,18 @@ bool GetExternalData(const std::string& exe_path,
 }
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
-void InitializeV8Common(const char* exe_path, v8::Platform** platform) {
-  v8::V8::InitializeICUDefaultLocation(exe_path);
+std::unique_ptr<v8::Platform> InitializeV8Common(const std::string& exe_path) {
+  v8::V8::InitializeICUDefaultLocation(exe_path.c_str());
 
-  *platform = v8::platform::CreateDefaultPlatform();
-  v8::V8::InitializePlatform(*platform);
-  v8::V8::Initialize();
+  std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
+  v8::V8::InitializePlatform(platform.get());
 
   // By enabling predictable mode, V8 won't post any background tasks.
-  const char predictable_flag[] = "--predictable";
-  v8::V8::SetFlagsFromString(predictable_flag,
-                             static_cast<int>(strlen(predictable_flag)));
+  // By enabling GC, it makes it easier to chase use-after-free.
+  const char v8_flags[] = "--predictable --expose-gc";
+  v8::V8::SetFlagsFromString(v8_flags, static_cast<int>(strlen(v8_flags)));
+  v8::V8::Initialize();
+  return platform;
 }
 #endif  // PDF_ENABLE_V8
 
@@ -100,6 +103,12 @@ std::unique_ptr<char, pdfium::FreeDeleter> GetFileContents(const char* filename,
   }
   *retlen = bytes_read;
   return buffer;
+}
+
+std::string GetPlatformString(FPDF_WIDESTRING wstr) {
+  WideString wide_string =
+      WideString::FromUTF16LE(wstr, WideString::WStringLength(wstr));
+  return std::string(wide_string.UTF8Encode().c_str());
 }
 
 std::wstring GetPlatformWString(FPDF_WIDESTRING wstr) {
@@ -149,29 +158,46 @@ std::unique_ptr<unsigned short, pdfium::FreeDeleter> GetFPDFWideString(
   return result;
 }
 
+std::string CryptToBase16(const uint8_t* digest) {
+  static char const zEncode[] = "0123456789abcdef";
+  std::string ret;
+  ret.resize(32);
+  for (int i = 0, j = 0; i < 16; i++, j += 2) {
+    uint8_t a = digest[i];
+    ret[j] = zEncode[(a >> 4) & 0xf];
+    ret[j + 1] = zEncode[a & 0xf];
+  }
+  return ret;
+}
+
+std::string GenerateMD5Base16(const uint8_t* data, uint32_t size) {
+  uint8_t digest[16];
+  CRYPT_MD5Generate(data, size, digest);
+  return CryptToBase16(digest);
+}
+
 #ifdef PDF_ENABLE_V8
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
-bool InitializeV8ForPDFium(const std::string& exe_path,
-                           const std::string& bin_dir,
-                           v8::StartupData* natives_blob,
-                           v8::StartupData* snapshot_blob,
-                           v8::Platform** platform) {
-  InitializeV8Common(exe_path.c_str(), platform);
+std::unique_ptr<v8::Platform> InitializeV8ForPDFiumWithStartupData(
+    const std::string& exe_path,
+    const std::string& bin_dir,
+    v8::StartupData* natives_blob,
+    v8::StartupData* snapshot_blob) {
+  std::unique_ptr<v8::Platform> platform = InitializeV8Common(exe_path);
   if (natives_blob && snapshot_blob) {
     if (!GetExternalData(exe_path, bin_dir, "natives_blob.bin", natives_blob))
-      return false;
+      return nullptr;
     if (!GetExternalData(exe_path, bin_dir, "snapshot_blob.bin", snapshot_blob))
-      return false;
+      return nullptr;
     v8::V8::SetNativesDataBlob(natives_blob);
     v8::V8::SetSnapshotDataBlob(snapshot_blob);
   }
-  return true;
+  return platform;
 }
 #else   // V8_USE_EXTERNAL_STARTUP_DATA
-bool InitializeV8ForPDFium(const std::string& exe_path,
-                           v8::Platform** platform) {
-  InitializeV8Common(exe_path.c_str(), platform);
-  return true;
+std::unique_ptr<v8::Platform> InitializeV8ForPDFium(
+    const std::string& exe_path) {
+  return InitializeV8Common(exe_path);
 }
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 #endif  // PDF_ENABLE_V8
@@ -190,23 +216,5 @@ int TestLoader::GetBlock(void* param,
     return 0;
 
   memcpy(pBuf, pLoader->m_pBuf + pos, size);
-  return 1;
-}
-
-TestSaver::TestSaver() {
-  FPDF_FILEWRITE::version = 1;
-  FPDF_FILEWRITE::WriteBlock = WriteBlockCallback;
-}
-
-void TestSaver::ClearString() {
-  m_String.clear();
-}
-
-// static
-int TestSaver::WriteBlockCallback(FPDF_FILEWRITE* pFileWrite,
-                                  const void* data,
-                                  unsigned long size) {
-  TestSaver* pThis = static_cast<TestSaver*>(pFileWrite);
-  pThis->m_String.append(static_cast<const char*>(data), size);
   return 1;
 }
