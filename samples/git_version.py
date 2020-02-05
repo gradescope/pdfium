@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 def version():
     return subprocess.check_output(["git", "describe", "--tags"]).strip()
@@ -8,4 +9,4 @@ def write_version(output_path):
     with open(output_path, "w") as f:
         f.write(output)
 
-write_version("version.h")
+write_version(sys.argv[1])
