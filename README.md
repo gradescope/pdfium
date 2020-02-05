@@ -1,5 +1,10 @@
 # PDFium
 
+## Docker Hub
+
+Images with the pandafium binary built for AWS Lambda are available at
+https://hub.docker.com/repository/docker/gradescope/pandafium
+
 ## Prerequisites
 
 Get the chromium depot tools via the instructions at
