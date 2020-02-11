@@ -227,12 +227,12 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
   /* Now we can initialize the JPEG compression object. */
   jpeg_create_compress(&cinfo);
   jpeg_stdio_dest(&cinfo, fp);
-  // Source data is B, G, R, alpha.
+  // Source data is B, G, R, unused.
   // Dest data is R, G, B.
   cinfo.image_width = image_width;      /* image width and height, in pixels */
   cinfo.image_height = image_height;
   cinfo.input_components = 4;           /* # of color components per pixel */
-  cinfo.in_color_space = JCS_EXT_BGRA;       /* colorspace of input image */
+  cinfo.in_color_space = JCS_EXT_BGRX;       /* colorspace of input image */
   /* Now use the library's routine to set default compression parameters.
    * (You must set at least cinfo.in_color_space before calling this,
    * since the defaults depend on the source color space.)
@@ -244,13 +244,6 @@ static void WriteJpg(const char* pdf_name, int num, const void* buffer_void,
   row_stride = image_width * 4; /* JSAMPLEs per row in image_buffer */
 
   while (cinfo.next_scanline < cinfo.image_height) {
-      // Convert pixels with opacity set to 0 (i.e. transparent) to white
-      int row_base = cinfo.next_scanline * row_stride;
-      for(int i = row_base; i < row_base + row_stride; i += 4) {
-          if(image_buffer[i+3] == 0){ // Pixel is completely transparent
-              image_buffer[i] = image_buffer[i+1] = image_buffer[i+2] = 255;
-          }
-      }
       /* jpeg_write_scanlines expects an array of pointers to scanlines.
        * Here the array is only one element long, but you could pass
        * more than one scanline at a time if that's more convenient.
