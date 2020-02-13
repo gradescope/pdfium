@@ -282,16 +282,16 @@ bool RenderPage(const std::string& name,
   if (!options.scale_factor_as_string.empty())
     std::stringstream(options.scale_factor_as_string) >> scale;
 
-  int width = static_cast<int>(FPDF_GetPageWidth(page) * scale);
-  int height = static_cast<int>(FPDF_GetPageHeight(page) * scale);
+  auto width = static_cast<int>(FPDF_GetPageWidth(page) * scale);
+  auto height = static_cast<int>(FPDF_GetPageHeight(page) * scale);
   int alpha = FPDFPage_HasTransparency(page) ? 1 : 0;
   FPDF_BITMAP bitmap = FPDFBitmap_Create(width, height, alpha);
   if (bitmap) {
     FPDF_DWORD fill_color = alpha ? 0x00000000 : 0xFFFFFFFF;
     FPDFBitmap_FillRect(bitmap, 0, 0, width, height, fill_color);
-    FPDF_RenderPageBitmap(bitmap, page, 0, 0, width, height, 0, 0);
+    FPDF_RenderPageBitmap(bitmap, page, 0, 0, width, height, 0, FPDF_ANNOT);
 
-    FPDF_FFLDraw(form, bitmap, page, 0, 0, width, height, 0, 0);
+    FPDF_FFLDraw(form, bitmap, page, 0, 0, width, height, 0, FPDF_ANNOT);
     int stride = FPDFBitmap_GetStride(bitmap);
     const char* buffer = reinterpret_cast<const char*>(FPDFBitmap_GetBuffer(bitmap));
 
