@@ -28,9 +28,10 @@ RUN gn gen out/Lambda
 ADD args.gn out/Lambda
 RUN gn gen out/Lambda
 
-RUN ninja -C out/Lambda samples:pandafium
+RUN ninja -C out/Lambda samples:pandafium samples:pdfium_test
 
 # Multistage build
 FROM lambci/lambda:build-python2.7
 COPY --from=build-environment /root/repo/pdfium/out/Lambda/pandafium /usr/local/bin/pandafium
+COPY --from=build-environment /root/repo/pdfium/out/Lambda/pdfium_test /usr/local/bin/pdfium_test
 CMD pandafium

@@ -55,6 +55,7 @@ executable("pdfium_test") {
     "../:test_support",
     "//build/win:default_exe_manifest",
   ]
+  libs = [ "/usr/lib64/libjpeg.a"]
   configs += [ ":pdfium_samples_config" ]
 
   if (pdf_enable_v8) {
