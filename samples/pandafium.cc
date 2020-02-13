@@ -13,7 +13,6 @@
 #include <utility>
 #include <vector>
 
-#include "public/fpdf_annot.h"
 #include "public/fpdf_dataavail.h"
 #include "public/fpdf_edit.h"
 #include "public/fpdf_ext.h"
